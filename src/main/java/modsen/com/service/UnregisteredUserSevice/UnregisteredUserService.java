@@ -7,7 +7,6 @@ import lombok.Setter;
 
 import java.util.Objects;
 
-@AllArgsConstructor
 public class UnregisteredUserService {
     @Getter
     @Setter
@@ -16,6 +15,11 @@ public class UnregisteredUserService {
     @Getter
     @Setter
     private String password;
+
+    public UnregisteredUserService(String login, String password) {
+        this.login = login;
+        this.password = Objects.hash(password)+"";
+    }
 
     @Override
     public boolean equals(Object o) {

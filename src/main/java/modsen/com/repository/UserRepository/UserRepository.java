@@ -30,7 +30,6 @@ public class UserRepository implements ReadUserTokenRepository, WriteNewUserRepo
     public boolean writeUser(UnregisteredUserService user) throws SQLException {
         if (getUserToken(user) == null) {
             PreparedStatement preparedStatement;
-            user.setPassword(Objects.hash(user.getPassword()) + "");
 
             String token = new TokenService().getToken(user);
             Connection connection = connectionRepository.getConnection();
@@ -62,7 +61,7 @@ public class UserRepository implements ReadUserTokenRepository, WriteNewUserRepo
         PreparedStatement preparedStatement = connection.prepareStatement(
                 "select * from users_list where login  = ? and password = ?");
         preparedStatement.setString(1, user.getLogin());
-        preparedStatement.setString(2, Objects.hash(user.getPassword())+"");
+        preparedStatement.setString(2, user.getPassword());
 
         ResultSet resultSet = preparedStatement.executeQuery();
         resultSet.next();
