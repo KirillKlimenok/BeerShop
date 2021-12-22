@@ -4,8 +4,10 @@ import modsen.com.repository.ConnactionsRepository.ConnectionRepository;
 import modsen.com.service.TokenService.TokenService;
 import modsen.com.service.UnregisteredUserSevice.UnregisteredUserService;
 
-import java.sql.*;
-import java.util.Objects;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.UUID;
 
 public class UserRepository implements ReadUserTokenRepository, WriteNewUserRepository {
