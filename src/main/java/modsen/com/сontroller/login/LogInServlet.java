@@ -16,12 +16,8 @@ public class LogInServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         UnregisteredUserService user = new JsonMapperService().getObj(getBodyReq(request),UnregisteredUserService.class);
-        try {
-            String token = new UserRepository().getUserToken(user);
-            response.sendRedirect("/" + token);
-        } catch (SQLException e) {
-            response.sendError(405,"wrong login or password");
-        }
+        String token = new UserRepository().getUserToken(user);
+        response.sendRedirect("/" + token);
     }
 
     @Override
