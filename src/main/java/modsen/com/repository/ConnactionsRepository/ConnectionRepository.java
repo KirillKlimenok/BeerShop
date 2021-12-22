@@ -2,30 +2,26 @@ package modsen.com.repository.ConnactionsRepository;
 
 import modsen.com.service.PropertysService.PropertyFileReaderService;
 import modsen.com.service.PropertysService.ReaderPropertyFile;
-import org.postgresql.Driver;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class ConnectionRepository {
-    public static final ConnectionRepository CONNECTION_REPOSITORY = new ConnectionRepository();
-    private String pathToDatabase;
-    private final String login = "postgres";
-    private final String password = "22k67s4A";
+    private static final ConnectionRepository CONNECTION_REPOSITORY= new ConnectionRepository();
+    private final String pathToDatabase;
+    private final String login;
+    private final String password;
+    private final String filePath = "D:\\Java\\JavaProjects\\projects\\Modsen\\beerShop\\src\\main\\resources\\config\\config.properties";
 
     public ConnectionRepository() {
         ReaderPropertyFile readerPropertyFile = new PropertyFileReaderService();
-        try {
-            this.pathToDatabase = readerPropertyFile.read("D:\\Java\\JavaProjects\\projects\\Modsen\\beerShop\\src\\main\\resources\\config\\config.properties", "pathToDatabase");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.login = readerPropertyFile.read(filePath,"login");
+        this.password = readerPropertyFile.read(filePath,"login");
+        this.pathToDatabase = readerPropertyFile.read(filePath, "pathToDatabase");
     }
 
     public Connection getConnection() throws SQLException {
-        Driver driver = new Driver();
         return DriverManager.getConnection(pathToDatabase,login,password);
     }
 

@@ -11,7 +11,7 @@ import java.sql.SQLException;
 import java.util.UUID;
 
 public class UserRepository implements ReadUserTokenRepository, WriteNewUserRepository {
-    ConnectionRepository connectionRepository = new ConnectionRepository();
+    ConnectionRepository connectionRepository = ConnectionRepository.getInstance();
 
     @Override
     public String getUserToken(UnregisteredUserService user) {
