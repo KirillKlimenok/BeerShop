@@ -12,13 +12,13 @@ public class ConnectionRepository {
     private final String pathToDatabase;
     private final String login;
     private final String password;
-    private final String filePath = "D:\\Java\\JavaProjects\\projects\\Modsen\\beerShop\\src\\main\\resources\\config\\config.properties";
+    private final String filePath = "./src/main/resources/config/config.properties";
 
     public ConnectionRepository() {
         ReaderPropertyFile readerPropertyFile = new PropertyFileReaderService();
-        this.login = readerPropertyFile.read(filePath,"login");
-        this.password = readerPropertyFile.read(filePath,"login");
-        this.pathToDatabase = readerPropertyFile.read(filePath, "pathToDatabase");
+        this.login = readerPropertyFile.read(filePath,"JDBC.login");
+        this.password = readerPropertyFile.read(filePath,"JDBC.password");
+        this.pathToDatabase = readerPropertyFile.read(filePath, "JDBC.path");
     }
 
     public Connection getConnection() throws SQLException {
