@@ -1,10 +1,10 @@
 package modsen.com.service.UnregisteredUserSevice;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-
 import java.util.Objects;
 
 public class UnregisteredUserService {
@@ -16,7 +16,7 @@ public class UnregisteredUserService {
     @Setter
     private String password;
 
-    public UnregisteredUserService(String login, String password) {
+    public UnregisteredUserService(@JsonProperty("login") String login,@JsonProperty("password") String password) {
         this.login = login;
         this.password = Objects.hash(password)+"";
     }

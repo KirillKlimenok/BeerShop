@@ -4,26 +4,32 @@ import modsen.com.repository.ConnactionsRepository.ConnectionRepository;
 import modsen.com.service.TokenService.TokenService;
 import modsen.com.service.UnregisteredUserSevice.UnregisteredUserService;
 
-import java.sql.*;
-import java.util.Objects;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.UUID;
 
 public class UserRepository implements ReadUserTokenRepository, WriteNewUserRepository {
-    ConnectionRepository connectionRepository = new ConnectionRepository();
+    ConnectionRepository connectionRepository = ConnectionRepository.getInstance();
 
     @Override
-    public String getUserToken(UnregisteredUserService user) throws SQLException {
-        Connection connection = connectionRepository.getConnection();
-        String userId = getUserId(connection, user);
+    public String getUserToken(UnregisteredUserService user) {
+        try {
+            Connection connection = connectionRepository.getConnection();
+            String userId = getUserId(connection, user);
 
-        PreparedStatement preparedStatement = connection.prepareStatement(
-                "select token from users_token where id_user = ?");
-        preparedStatement.setObject(1, UUID.fromString(userId));
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "select token from users_token where id_user = ?");
+            preparedStatement.setObject(1, UUID.fromString(userId));
 
-        ResultSet resultSet = preparedStatement.executeQuery();
-        resultSet.next();
-        return resultSet.getString("token");
-
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return resultSet.getString("token");
+        }catch (SQLException e){
+            System.out.println(e.getMessage());
+            return null;
+        }
     }
 
     @Override
