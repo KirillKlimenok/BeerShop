@@ -103,6 +103,13 @@
             <artifactId>postgresql</artifactId>
             <version>42.3.1</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/hikari-cp/hikari-cp -->
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>5.0.0</version>
+        </dependency>
     </dependencies>
 
     <build>
