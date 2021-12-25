@@ -2,8 +2,9 @@ package modsen.com.repository.UserRepository;
 
 import modsen.com.exceptions.NotFoundUserException;
 import modsen.com.repository.ConnactionsRepository.ConnectionRepository;
+import modsen.com.repository.ConnactionsRepository.ConnectionRepositoryImpl;
 import modsen.com.service.TokenService.TokenService;
-import modsen.com.service.UnregisteredUserSevice.UnregisteredUserService;
+import modsen.com.dto.UnregisteredUserDto;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,12 +13,12 @@ import java.sql.SQLException;
 import java.util.UUID;
 
 public class UserRepository implements ReadUserTokenRepository, WriteNewUserRepository {
-    ConnectionRepository connectionRepository = ConnectionRepository.getInstance();
+    ConnectionRepository connectionRepository = new ConnectionRepositoryImpl();
 
     @Override
-    public String getUserToken(UnregisteredUserService user) {
+    public String getUserToken(UnregisteredUserDto user) {
         try {
-            Connection connection = connectionRepository.getConnection();
+            Connection connection = connectionRepository.connect();
             String userId = getUserId(connection, user);
 
             PreparedStatement preparedStatement = connection.prepareStatement(
@@ -33,12 +34,12 @@ public class UserRepository implements ReadUserTokenRepository, WriteNewUserRepo
     }
 
     @Override
-    public boolean writeUser(UnregisteredUserService user) throws SQLException {
+    public boolean writeUser(UnregisteredUserDto user) throws SQLException {
         if (getUserToken(user) == null) {
             PreparedStatement preparedStatement;
 
             String token = new TokenService().getToken(user);
-            Connection connection = connectionRepository.getConnection();
+            Connection connection = connectionRepository.connect();
 
             preparedStatement = connection.prepareStatement(
                     "insert into users_list(login, password) VALUES (?,?)");
@@ -52,7 +53,7 @@ public class UserRepository implements ReadUserTokenRepository, WriteNewUserRepo
         return false;
     }
 
-    private boolean writeToken(String token, Connection connection, UnregisteredUserService user) throws SQLException {
+    private boolean writeToken(String token, Connection connection, UnregisteredUserDto user) throws SQLException {
         String userId = getUserId(connection, user);
         PreparedStatement preparedStatement;
 
@@ -63,7 +64,7 @@ public class UserRepository implements ReadUserTokenRepository, WriteNewUserRepo
         return preparedStatement.execute();
     }
 
-    private String getUserId(Connection connection, UnregisteredUserService user) throws SQLException {
+    private String getUserId(Connection connection, UnregisteredUserDto user) throws SQLException {
         PreparedStatement preparedStatement = connection.prepareStatement(
                 "select * from users_list where login  = ? and password = ?");
         preparedStatement.setString(1, user.getLogin());

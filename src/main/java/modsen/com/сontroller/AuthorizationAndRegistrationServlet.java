@@ -2,7 +2,7 @@ package modsen.com.сontroller;
 
 import modsen.com.repository.UserRepository.UserRepository;
 import modsen.com.service.JsonMapperService.JsonMapperService;
-import modsen.com.service.UnregisteredUserSevice.UnregisteredUserService;
+import modsen.com.dto.UnregisteredUserDto;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -15,7 +15,7 @@ import java.sql.SQLException;
 public class AuthorizationAndRegistrationServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        UnregisteredUserService user = new JsonMapperService().getObj(getBodyReq(request),UnregisteredUserService.class);
+        UnregisteredUserDto user = new JsonMapperService().getObj(getBodyReq(request), UnregisteredUserDto.class);
         String token = new UserRepository().getUserToken(user);
         response.sendRedirect("/" + token);
     }
@@ -23,7 +23,7 @@ public class AuthorizationAndRegistrationServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String jsonUnregUser = getBodyReq(request);
-        UnregisteredUserService user = new JsonMapperService().getObj(jsonUnregUser,UnregisteredUserService.class);
+        UnregisteredUserDto user = new JsonMapperService().getObj(jsonUnregUser, UnregisteredUserDto.class);
         UserRepository userRepository = new UserRepository();
         try {
             userRepository.writeUser(user);
