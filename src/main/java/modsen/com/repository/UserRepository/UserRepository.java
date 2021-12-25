@@ -1,5 +1,6 @@
 package modsen.com.repository.UserRepository;
 
+import modsen.com.exceptions.NotFoundUserException;
 import modsen.com.repository.ConnactionsRepository.ConnectionRepository;
 import modsen.com.service.TokenService.TokenService;
 import modsen.com.service.UnregisteredUserSevice.UnregisteredUserService;
@@ -26,9 +27,8 @@ public class UserRepository implements ReadUserTokenRepository, WriteNewUserRepo
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
             return resultSet.getString("token");
-        }catch (SQLException e){
-            System.out.println(e.getMessage());
-            return null;
+        } catch (SQLException e) {
+            throw new NotFoundUserException(e.getMessage());
         }
     }
 
