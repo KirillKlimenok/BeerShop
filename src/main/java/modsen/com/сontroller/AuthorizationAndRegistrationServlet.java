@@ -1,7 +1,8 @@
 package modsen.com.сontroller;
 
-import modsen.com.repository.UserRepository.UserRepository;
-import modsen.com.service.JsonMapperService.JsonMapperService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import modsen.com.repository.user.UserRepository;
+import modsen.com.service.jsonmapper.JsonMapperServiceImpl;
 import modsen.com.dto.UnregisteredUserDto;
 
 import javax.servlet.*;
@@ -13,25 +14,34 @@ import java.sql.SQLException;
 
 @WebServlet(name = "AuthorizationAndRegistrationServlet", value = "/auth")
 public class AuthorizationAndRegistrationServlet extends HttpServlet {
+    JsonMapperServiceImpl jsonMapperService;
+    UserRepository userRepository;
+
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        UnregisteredUserDto user = new JsonMapperService().getObj(getBodyReq(request), UnregisteredUserDto.class);
-        String token = new UserRepository().getUserToken(user);
+        UnregisteredUserDto user = jsonMapperService.getObj(getBodyReq(request), UnregisteredUserDto.class);
+        String token = userRepository.getUserToken(user);
         response.sendRedirect("/" + token);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String jsonUnregUser = getBodyReq(request);
-        UnregisteredUserDto user = new JsonMapperService().getObj(jsonUnregUser, UnregisteredUserDto.class);
-        UserRepository userRepository = new UserRepository();
         try {
+            UnregisteredUserDto user = jsonMapperService.getObj(jsonUnregUser, UnregisteredUserDto.class);
             userRepository.writeUser(user);
             response.setStatus(200);
-        } catch (SQLException e) {
-            response.sendError(405,"you entered wrong login or password\n" + e.getMessage());
+        } catch (SQLException | JsonProcessingException e) {
+            response.sendError(400, "you entered wrong login or password\n" + e.getMessage());
         }
 
+    }
+
+    @Override
+    public void init() {
+        jsonMapperService = new JsonMapperServiceImpl();
+        userRepository = new UserRepository();
     }
 
     private String getBodyReq(HttpServletRequest req) throws IOException {

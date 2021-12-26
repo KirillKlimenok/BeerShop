@@ -1,7 +1,7 @@
-package modsen.com.repository.ConnactionsRepository;
+package modsen.com.repository.connections;
 
-import modsen.com.service.PropertysService.PropertyFileReaderService;
-import modsen.com.service.PropertysService.ReaderPropertyFile;
+import modsen.com.service.property.PropertyFileReaderService;
+import modsen.com.service.property.ReaderPropertyFile;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

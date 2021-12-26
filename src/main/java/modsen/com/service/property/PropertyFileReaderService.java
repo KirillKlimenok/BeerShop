@@ -1,9 +1,8 @@
-package modsen.com.service.PropertysService;
+package modsen.com.service.property;
 
 import lombok.SneakyThrows;
 
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Properties;
 
 public class PropertyFileReaderService implements ReaderPropertyFile {

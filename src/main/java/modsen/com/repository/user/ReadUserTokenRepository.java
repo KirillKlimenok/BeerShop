@@ -1,4 +1,4 @@
-package modsen.com.repository.UserRepository;
+package modsen.com.repository.user;
 
 import modsen.com.dto.UnregisteredUserDto;
 

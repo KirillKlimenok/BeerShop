@@ -1,10 +1,12 @@
-package modsen.com.repository.UserRepository;
+package modsen.com.repository.user;
 
+import lombok.extern.log4j.Log4j;
 import modsen.com.exceptions.NotFoundUserException;
-import modsen.com.repository.ConnactionsRepository.ConnectionRepository;
-import modsen.com.repository.ConnactionsRepository.ConnectionRepositoryImpl;
-import modsen.com.service.TokenService.TokenService;
+import modsen.com.repository.connections.ConnectionRepository;
+import modsen.com.repository.connections.ConnectionRepositoryImpl;
+import modsen.com.service.token.TokenServiceImpl;
 import modsen.com.dto.UnregisteredUserDto;
+import org.apache.log4j.Priority;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,8 +14,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 
+@Log4j
 public class UserRepository implements ReadUserTokenRepository, WriteNewUserRepository {
-    ConnectionRepository connectionRepository = new ConnectionRepositoryImpl();
+    ConnectionRepository connectionRepository;
+
+    public UserRepository() {
+        connectionRepository = new ConnectionRepositoryImpl();
+    }
 
     @Override
     public String getUserToken(UnregisteredUserDto user) {
@@ -29,28 +36,48 @@ public class UserRepository implements ReadUserTokenRepository, WriteNewUserRepo
             resultSet.next();
             return resultSet.getString("token");
         } catch (SQLException e) {
+            log.log(Priority.ERROR, e.getMessage());
             throw new NotFoundUserException(e.getMessage());
         }
     }
 
     @Override
     public boolean writeUser(UnregisteredUserDto user) throws SQLException {
-        if (getUserToken(user) == null) {
+        if (isRegisteredUser(user)) {
             PreparedStatement preparedStatement;
 
-            String token = new TokenService().getToken(user);
+            String token = new TokenServiceImpl().getToken(user);
             Connection connection = connectionRepository.connect();
 
             preparedStatement = connection.prepareStatement(
-                    "insert into users_list(login, password) VALUES (?,?)");
+                    "insert into users_list(login, email, password) VALUES (?,?,?)");
             preparedStatement.setString(1, user.getLogin());
-            preparedStatement.setString(2, user.getPassword());
+            preparedStatement.setString(2, user.getEmail());
+            preparedStatement.setString(3, user.getPassword());
 
             if (!preparedStatement.execute()) {
-                writeToken(token, connection, user);
+                return writeToken(token, connection, user);
             }
         }
         return false;
+    }
+
+    public boolean isRegisteredUser(UnregisteredUserDto user){
+        try {
+            Connection connection = connectionRepository.connect();
+            PreparedStatement preparedStatement;
+
+            preparedStatement = connection.prepareStatement(
+                    "select * from users_list where login  = ? and email = ?");
+            preparedStatement.setString(1, user.getLogin());
+            preparedStatement.setString(2, user.getEmail());
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            return !resultSet.getString("id").isEmpty();
+        }catch (SQLException e){
+            return false;
+        }
     }
 
     private boolean writeToken(String token, Connection connection, UnregisteredUserDto user) throws SQLException {
@@ -66,8 +93,9 @@ public class UserRepository implements ReadUserTokenRepository, WriteNewUserRepo
 
     private String getUserId(Connection connection, UnregisteredUserDto user) throws SQLException {
         PreparedStatement preparedStatement = connection.prepareStatement(
-                "select * from users_list where login  = ? and password = ?");
+                "select * from users_list where login  = ? and email = ? and password = ?");
         preparedStatement.setString(1, user.getLogin());
+        preparedStatement.setString(2, user.getEmail());
         preparedStatement.setString(2, user.getPassword());
 
         ResultSet resultSet = preparedStatement.executeQuery();
