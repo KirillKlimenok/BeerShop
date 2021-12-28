@@ -1,5 +1,6 @@
 package modsen.com.repository.user;
 
+import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j;
 import modsen.com.exceptions.NotFoundUserException;
 import modsen.com.repository.connections.ConnectionRepository;
@@ -23,27 +24,27 @@ public class UserRepository implements ReadUserTokenRepository, WriteNewUserRepo
     }
 
     @Override
+    @SneakyThrows
     public String getUserToken(UnregisteredUserDto user) {
-        try {
-            Connection connection = connectionRepository.connect();
-            String userId = getUserId(connection, user);
+//        try {
+        Connection connection = connectionRepository.connect();
+        String userId = getUserId(connection, user);
 
-            PreparedStatement preparedStatement = connection.prepareStatement(
-                    "select token from users_token where id_user = ?");
-            preparedStatement.setObject(1, UUID.fromString(userId));
+        PreparedStatement preparedStatement = connection.prepareStatement(
+                "select token from users_token where id_user = ?");
+        preparedStatement.setObject(1, UUID.fromString(userId));
 
-            ResultSet resultSet = preparedStatement.executeQuery();
-            resultSet.next();
+        ResultSet resultSet = preparedStatement.executeQuery();
+        if(resultSet.next()){
             return resultSet.getString("token");
-        } catch (SQLException e) {
-            log.log(Priority.ERROR, e.getMessage());
-            throw new NotFoundUserException(e.getMessage());
+        }else{
+            throw new NotFoundUserException(user+ " not found");
         }
     }
 
     @Override
     public boolean writeUser(UnregisteredUserDto user) throws SQLException {
-        if (isRegisteredUser(user)) {
+        if (!isRegisteredUser(user)) {
             PreparedStatement preparedStatement;
 
             String token = new TokenServiceImpl().getToken(user);
@@ -62,20 +63,19 @@ public class UserRepository implements ReadUserTokenRepository, WriteNewUserRepo
         return false;
     }
 
-    public boolean isRegisteredUser(UnregisteredUserDto user){
+    public boolean isRegisteredUser(UnregisteredUserDto user) {
         try {
             Connection connection = connectionRepository.connect();
             PreparedStatement preparedStatement;
 
             preparedStatement = connection.prepareStatement(
-                    "select * from users_list where login  = ? and email = ?");
-            preparedStatement.setString(1, user.getLogin());
-            preparedStatement.setString(2, user.getEmail());
+                    "select * from users_list where email = ?");
+            preparedStatement.setString(1, user.getEmail());
 
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
             return !resultSet.getString("id").isEmpty();
-        }catch (SQLException e){
+        } catch (SQLException e) {
             return false;
         }
     }
@@ -93,14 +93,16 @@ public class UserRepository implements ReadUserTokenRepository, WriteNewUserRepo
 
     private String getUserId(Connection connection, UnregisteredUserDto user) throws SQLException {
         PreparedStatement preparedStatement = connection.prepareStatement(
-                "select * from users_list where login  = ? and email = ? and password = ?");
+                "select id from users_list where login  = ? and password = ?");
         preparedStatement.setString(1, user.getLogin());
-        preparedStatement.setString(2, user.getEmail());
         preparedStatement.setString(2, user.getPassword());
 
         ResultSet resultSet = preparedStatement.executeQuery();
-        resultSet.next();
-        return resultSet.getString("id");
+        if (resultSet.next()) {
+            return resultSet.getString("id");
+        } else {
+            throw new NotFoundUserException(user + "not found");
+        }
     }
 
 }
