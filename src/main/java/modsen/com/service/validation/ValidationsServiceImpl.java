@@ -1,6 +1,5 @@
-package modsen.com.service;
+package modsen.com.service.validation;
 
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ValidationsServiceImpl implements ValidationsService {

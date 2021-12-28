@@ -1,5 +1,6 @@
 package modsen.com.repository.connections;
 
+import modsen.com.service.Constants;
 import modsen.com.service.property.PropertyFileReaderService;
 import modsen.com.service.property.ReaderPropertyFile;
 
@@ -11,7 +12,7 @@ public class ConnectionRepositoryImpl implements ConnectionRepository{
     private final String pathToDatabase;
     private final String login;
     private final String password;
-    private final String filePath = "./src/main/resources/config/config.properties";
+    private final String filePath = Constants.CONFIG_FILE.getInfo();
 
     public ConnectionRepositoryImpl() {
         ReaderPropertyFile readerPropertyFile = new PropertyFileReaderService();

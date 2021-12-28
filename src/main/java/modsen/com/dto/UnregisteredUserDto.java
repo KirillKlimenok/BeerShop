@@ -4,8 +4,8 @@ package modsen.com.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import modsen.com.exceptions.NotTrueValidationUserException;
-import modsen.com.service.ValidationsService;
-import modsen.com.service.ValidationsServiceImpl;
+import modsen.com.service.validation.ValidationsService;
+import modsen.com.service.validation.ValidationsServiceImpl;
 
 import java.util.Objects;
 

@@ -1,4 +1,4 @@
-package modsen.com.service;
+package modsen.com.service.validation;
 
 public interface ValidationsService {
     boolean isTrueLogin(String login);

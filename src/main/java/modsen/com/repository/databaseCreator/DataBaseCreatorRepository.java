@@ -1,4 +1,8 @@
 package modsen.com.repository.databaseCreator;
 
-public class DataBaseCreatorRepository {
+import java.io.FileNotFoundException;
+import java.sql.SQLException;
+
+public interface DataBaseCreatorRepository {
+    boolean create() throws SQLException, FileNotFoundException;
 }
