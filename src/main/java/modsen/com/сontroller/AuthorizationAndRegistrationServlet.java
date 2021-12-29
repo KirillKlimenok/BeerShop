@@ -1,10 +1,15 @@
 package modsen.com.сontroller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import modsen.com.repository.user.UserRepository;
-import modsen.com.service.jsonmapper.JsonMapperServiceImpl;
+import lombok.extern.log4j.Log4j;
 import modsen.com.dto.UnregisteredUserDto;
-
+import modsen.com.exceptions.NotTrueValidationUserException;
+import modsen.com.service.user.UserService;
+import modsen.com.service.user.UserServiceImpl;
+import modsen.com.service.jsonmapper.JsonMapperServiceImpl;
+import modsen.com.service.validation.ValidationsService;
+import modsen.com.service.validation.ValidationsServiceImpl;
+import org.apache.log4j.Priority;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -13,18 +18,18 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.sql.SQLException;
 
 @WebServlet(name = "AuthorizationAndRegistrationServlet", value = "/auth")
+@Log4j
 public class AuthorizationAndRegistrationServlet extends HttpServlet {
-    JsonMapperServiceImpl jsonMapperService;
-    UserRepository userRepository;
-
+    private JsonMapperServiceImpl jsonMapperService;
+    private UserService userService;
+    private ValidationsService validationsService;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         UnregisteredUserDto user = jsonMapperService.getObj(getBodyReq(request), UnregisteredUserDto.class);
-        String token = userRepository.getUserToken(user);
+        String token = userService.getTokenUser(user);
         response.sendRedirect("/" + token);
     }
 
@@ -33,10 +38,15 @@ public class AuthorizationAndRegistrationServlet extends HttpServlet {
         String jsonUnregUser = getBodyReq(request);
         try {
             UnregisteredUserDto user = jsonMapperService.getObj(jsonUnregUser, UnregisteredUserDto.class);
-            userRepository.writeUser(user);
-            response.setStatus(200);
-        } catch (SQLException | JsonProcessingException e) {
-            response.sendError(400, "you entered wrong login or password\n" + e.getMessage());
+            if (validationsService.isTrueLogin(user.getLogin()) && validationsService.isTrueMail(user.getEmail())) {
+                userService.createNewUser(user);
+                response.setStatus(200);
+            } else {
+                response.sendError(400, "wrong email or password");
+            }
+        } catch (JsonProcessingException | NotTrueValidationUserException e) {
+            log.log(Priority.WARN, e.getMessage());
+            response.sendError(400, "you entered wrong login or password\n");
         }
 
     }
@@ -44,7 +54,8 @@ public class AuthorizationAndRegistrationServlet extends HttpServlet {
     @Override
     public void init() {
         jsonMapperService = new JsonMapperServiceImpl();
-        userRepository = new UserRepository();
+        userService = new UserServiceImpl();
+        validationsService = new ValidationsServiceImpl();
     }
 
     private String getBodyReq(HttpServletRequest req) throws IOException {
