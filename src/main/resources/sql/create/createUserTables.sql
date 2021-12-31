@@ -7,6 +7,5 @@ create table users_list(
 
 create table users_token(
     id bigserial primary key not null,
-    token varchar not null,
-    id_user uuid references users_list not null
+    token uuid not null references users_list(id)
 );
