@@ -14,9 +14,9 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final ValidationsService validationsService;
 
-    public UserServiceImpl() {
-        this.userRepository = new UserRepository();
-        this.validationsService = new ValidationsServiceImpl();
+    public UserServiceImpl(UserRepository userRepository, ValidationsService validationsService) {
+        this.userRepository = userRepository;
+        this.validationsService = validationsService;
     }
 
     @Override

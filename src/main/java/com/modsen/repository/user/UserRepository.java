@@ -52,7 +52,7 @@ public class UserRepository {
         }
     }
 
-    public boolean isRegisteredUser(UnregisteredUserDto user) {
+    public boolean isRegisteredUser(UnregisteredUserDto user) throws SQLException {
         try (Connection connection = connectionRepository.connect();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlScriptForFindUserInDb)) {
             preparedStatement.setString(1, user.getEmail());
@@ -64,7 +64,7 @@ public class UserRepository {
             return !resultSet.getString("id").isEmpty();
         } catch (SQLException e) {
             log.error(e.getMessage());
-            return false;
+            throw new SQLException(e.getMessage());
         }
     }
 

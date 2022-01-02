@@ -3,6 +3,7 @@ package com.modsen.сontroller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.modsen.dto.UnregisteredUserDto;
 import com.modsen.exceptions.NotTrueValidationUserException;
+import com.modsen.repository.user.UserRepository;
 import com.modsen.service.jsonmapper.JsonMapperServiceImpl;
 import com.modsen.service.user.UserService;
 import com.modsen.service.validation.EmailValidatorService;
@@ -60,8 +61,8 @@ public class AuthorizationAndRegistrationServlet extends HttpServlet {
     @Override
     public void init() {
         jsonMapperService = new JsonMapperServiceImpl();
-        userService = new UserServiceImpl();
         validationsService = new ValidationsServiceImpl();
+        userService = new UserServiceImpl(new UserRepository(), validationsService);
         validators = new ArrayList<Validator>() {{
             add(new EmailValidatorService());
             add(new LoginValidatorService());
