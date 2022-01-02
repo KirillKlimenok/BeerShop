@@ -1,97 +1,61 @@
 package com.modsen.repository.user;
 
+import com.modsen.repository.user.dto.UnregisteredUserDto;
+import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j;
-import com.modsen.dto.UnregisteredUserDto;
-import com.modsen.exceptions.NotFoundUserException;
-import com.modsen.repository.connections.ConnectionRepository;
-import com.modsen.repository.connections.ConnectionRepositoryImpl;
-import org.apache.log4j.Priority;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.UUID;
+import java.util.Optional;
 
 @Log4j
+@AllArgsConstructor
 public class UserRepository {
-    private static final ConnectionRepository connectionRepository = new ConnectionRepositoryImpl();
-    private final String sqlScriptForGetUserToken = "select token from users_token where id_user = ?";
-    private final String sqlScriptForAddUserInDb = "insert into users_list(login, email, password) VALUES (?,?,?)";
-    private final String sqlScriptForFindUserInDb = "select * from users_list where email = ? or login = ?";
-    private final String sqlScriptForWriteUserToken = "insert into users_token(token) VALUES (?)";
-    private final String sqlScriptForFindUserForAuth = "select id from users_list where login  = ? and password = ?";
+    private static final String SQL_SCRIPT_FOR_GET_USER_TOKEN = "select token from users_token where token = (select id from users_list where login = ? and password = ?);";
+    private static final String SQL_SCRIPT_FOR_ADD_USER_IN_DB = "insert into users_list(id, login, email, password) VALUES (?,?,?,?); insert into users_token(token) VALUES (?)";
+    private static final String SQL_SCRIPT_FOR_FIND_USER_IN_DB = "select * from users_list where ? = ?";
 
-    public String getUserToken(UnregisteredUserDto user) {
-        try (Connection connection = connectionRepository.connect();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlScriptForGetUserToken)) {
-            String userId = getUserId(user);
+    private DataSource dataSource;
 
-            preparedStatement.setObject(1, UUID.fromString(userId));
+    public Optional<String> getUserToken(String userLogin, String userPassword) throws SQLException {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(SQL_SCRIPT_FOR_GET_USER_TOKEN)) {
+            preparedStatement.setString(1, userLogin);
+            preparedStatement.setString(2, userPassword);
 
             ResultSet resultSet = preparedStatement.executeQuery();
-
-            if (resultSet.next()) {
-                return resultSet.getString("token");
-            } else {
-                throw new NotFoundUserException(user + " not found");
-            }
-        } catch (SQLException e) {
-            log.log(Priority.WARN, e.getMessage());
-            throw new NotFoundUserException(user + " not found");
+            resultSet.next();
+            return Optional.ofNullable(resultSet.getString("token"));
         }
     }
 
-    public boolean writeUser(UnregisteredUserDto user) throws SQLException {
-        try (Connection connection = connectionRepository.connect();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlScriptForAddUserInDb)) {
-            preparedStatement.setString(1, user.getLogin());
-            preparedStatement.setString(2, user.getEmail());
-
-            return preparedStatement.execute();
-        }
-    }
-
-    public boolean isRegisteredUser(UnregisteredUserDto user) throws SQLException {
-        try (Connection connection = connectionRepository.connect();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlScriptForFindUserInDb)) {
-            preparedStatement.setString(1, user.getEmail());
+    public void save(UnregisteredUserDto user) throws SQLException {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(SQL_SCRIPT_FOR_ADD_USER_IN_DB)) {
+            preparedStatement.setObject(1, user.getToken());
             preparedStatement.setString(2, user.getLogin());
+            preparedStatement.setString(3, user.getEmail());
+            preparedStatement.setString(4, user.getPassword());
+            preparedStatement.setObject(5, user.getToken());
+
+            preparedStatement.execute();
+            connection.commit();
+        }
+    }
+
+    public boolean isUserExist(String argument, String value) throws SQLException {
+        String sql = SQL_SCRIPT_FOR_FIND_USER_IN_DB.replaceFirst("[?]", argument);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, value);
 
             ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                return !resultSet.getString("id").isEmpty();
-            } else {
-                return false;
-            }
-        } catch(SQLException e){
-            log.error(e.getMessage());
-            throw new SQLException(e.getMessage());
+            return resultSet.next();
         }
     }
-
-    public boolean writeToken(String token) throws SQLException {
-        try (Connection connection = connectionRepository.connect();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlScriptForWriteUserToken)) {
-
-            preparedStatement.setObject(1, UUID.fromString(token));
-            return preparedStatement.execute();
-        }
-    }
-
-    public String getUserId(UnregisteredUserDto user) throws SQLException {
-        try (Connection connection = connectionRepository.connect();
-             PreparedStatement preparedStatement = connection.prepareStatement(sqlScriptForFindUserForAuth)) {
-            preparedStatement.setString(1, user.getLogin());
-            preparedStatement.setString(2, user.getPassword());
-
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                return resultSet.getString("id");
-            } else {
-                throw new NotFoundUserException(user + "not found");
-            }
-        }
-    }
-
 }
+
+
