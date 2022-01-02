@@ -57,12 +57,14 @@ public class UserRepository {
              PreparedStatement preparedStatement = connection.prepareStatement(sqlScriptForFindUserInDb)) {
             preparedStatement.setString(1, user.getEmail());
             preparedStatement.setString(2, user.getLogin());
-            preparedStatement.setString(3, user.getPassword());
 
             ResultSet resultSet = preparedStatement.executeQuery();
-            resultSet.next();
-            return !resultSet.getString("id").isEmpty();
-        } catch (SQLException e) {
+            if (resultSet.next()) {
+                return !resultSet.getString("id").isEmpty();
+            } else {
+                return false;
+            }
+        } catch(SQLException e){
             log.error(e.getMessage());
             throw new SQLException(e.getMessage());
         }
