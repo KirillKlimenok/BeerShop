@@ -1,16 +1,19 @@
 package modsen.com.service.validation;
 
+import modsen.com.dto.UnregisteredUserDto;
+
+import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 public class ValidationsServiceImpl implements ValidationsService {
-    @Override
-    public boolean isTrueLogin(String login) {
-        return Pattern.matches("[a-zA-Z]*",login);
-    }
 
     @Override
-    public boolean isTrueMail(String mail) {
-        String emailRegex = "^([a-z0-9_-]+\\.)*[a-z0-9_-]+@[a-z0-9_-]+(\\.[a-z0-9_-]+)*\\.[a-z]{2,6}$";
-        return Pattern.matches(emailRegex,mail);
+    public boolean validate(UnregisteredUserDto user, ArrayList<Validator> validators) {
+        for (Validator validator:validators){
+            if(!validator.check(user)){
+                return false;
+            }
+        }
+        return true;
     }
 }
