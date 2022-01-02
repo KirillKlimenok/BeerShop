@@ -15,16 +15,12 @@ import java.util.UUID;
 
 @Log4j
 public class UserRepository {
-    private final ConnectionRepository connectionRepository;
+    private static final ConnectionRepository connectionRepository = new ConnectionRepositoryImpl();
     private final String sqlScriptForGetUserToken = "select token from users_token where id_user = ?";
     private final String sqlScriptForAddUserInDb = "insert into users_list(login, email, password) VALUES (?,?,?)";
-    private final String sqlScriptForFindUserInDb = "select * from users_list where email = ?";
+    private final String sqlScriptForFindUserInDb = "select * from users_list where email = ? or login = ?";
     private final String sqlScriptForWriteUserToken = "insert into users_token(token) VALUES (?)";
     private final String sqlScriptForFindUserForAuth = "select id from users_list where login  = ? and password = ?";
-
-    public UserRepository() {
-        connectionRepository = new ConnectionRepositoryImpl();
-    }
 
     public String getUserToken(UnregisteredUserDto user) {
         try (Connection connection = connectionRepository.connect();
@@ -51,7 +47,6 @@ public class UserRepository {
              PreparedStatement preparedStatement = connection.prepareStatement(sqlScriptForAddUserInDb)) {
             preparedStatement.setString(1, user.getLogin());
             preparedStatement.setString(2, user.getEmail());
-            preparedStatement.setString(3, user.getPassword());
 
             return preparedStatement.execute();
         }
@@ -61,6 +56,8 @@ public class UserRepository {
         try (Connection connection = connectionRepository.connect();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlScriptForFindUserInDb)) {
             preparedStatement.setString(1, user.getEmail());
+            preparedStatement.setString(2, user.getLogin());
+            preparedStatement.setString(3, user.getPassword());
 
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
