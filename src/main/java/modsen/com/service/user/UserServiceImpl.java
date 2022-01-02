@@ -5,8 +5,10 @@ import modsen.com.exceptions.NotTrueValidationUserException;
 import modsen.com.repository.user.UserRepository;
 import modsen.com.service.validation.ValidationsService;
 import modsen.com.service.validation.ValidationsServiceImpl;
+import modsen.com.service.validation.Validator;
 
 import java.sql.SQLException;
+import java.util.List;
 
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
@@ -18,8 +20,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void createNewUser(UnregisteredUserDto user) {
-        if (validationsService.isTrueMail(user.getEmail()) && validationsService.isTrueLogin(user.getLogin())) {
+    public void createNewUser(UnregisteredUserDto user, List<Validator> validators) {
+        if (validationsService.validate(user, validators)) {
             try {
                 if(!userRepository.isRegisteredUser(user)) {
                     userRepository.writeUser(user);
