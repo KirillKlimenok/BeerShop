@@ -16,7 +16,7 @@ import java.util.UUID;
 @Log4j
 public class UserRepository {
     private static final ConnectionRepository connectionRepository = new ConnectionRepositoryImpl();
-    private final String sqlScriptForGetUserToken = "select token from users_token where id_user = ?";
+    private final String sqlScriptForGetUserToken = "select token from users_token where token = ?";
     private final String sqlScriptForAddUserInDb = "insert into users_list(login, email, password) VALUES (?,?,?)";
     private final String sqlScriptForFindUserInDb = "select * from users_list where email = ? or login = ?";
     private final String sqlScriptForWriteUserToken = "insert into users_token(token) VALUES (?)";
@@ -26,18 +26,16 @@ public class UserRepository {
         try (Connection connection = connectionRepository.connect();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlScriptForGetUserToken)) {
             String userId = getUserId(user);
-
             preparedStatement.setObject(1, UUID.fromString(userId));
 
             ResultSet resultSet = preparedStatement.executeQuery();
-
             if (resultSet.next()) {
                 return resultSet.getString("token");
             } else {
                 throw new NotFoundUserException(user + " not found");
             }
         } catch (SQLException e) {
-            log.log(Priority.WARN, e.getMessage());
+            log.error(e.getMessage());
             throw new NotFoundUserException(user + " not found");
         }
     }
@@ -47,6 +45,7 @@ public class UserRepository {
              PreparedStatement preparedStatement = connection.prepareStatement(sqlScriptForAddUserInDb)) {
             preparedStatement.setString(1, user.getLogin());
             preparedStatement.setString(2, user.getEmail());
+            preparedStatement.setString(3, user.getPassword());
 
             return preparedStatement.execute();
         }
@@ -64,7 +63,7 @@ public class UserRepository {
             } else {
                 return false;
             }
-        } catch(SQLException e){
+        } catch (SQLException e) {
             log.error(e.getMessage());
             throw new SQLException(e.getMessage());
         }

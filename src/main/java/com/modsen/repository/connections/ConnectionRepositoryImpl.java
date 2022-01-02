@@ -4,7 +4,6 @@ import com.modsen.service.property.PropertyFileReaderService;
 import com.modsen.service.property.ReaderPropertyFile;
 import com.zaxxer.hikari.HikariDataSource;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 

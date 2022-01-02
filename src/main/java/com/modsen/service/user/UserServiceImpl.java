@@ -4,7 +4,6 @@ import com.modsen.dto.UnregisteredUserDto;
 import com.modsen.exceptions.NotTrueValidationUserException;
 import com.modsen.repository.user.UserRepository;
 import com.modsen.service.validation.ValidationsService;
-import com.modsen.service.validation.ValidationsServiceImpl;
 import com.modsen.service.validation.Validator;
 
 import java.sql.SQLException;
