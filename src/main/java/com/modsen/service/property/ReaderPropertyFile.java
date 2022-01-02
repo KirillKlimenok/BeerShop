@@ -1,4 +1,4 @@
-package modsen.com.service.property;
+package com.modsen.service.property;
 
 import java.io.IOException;
 

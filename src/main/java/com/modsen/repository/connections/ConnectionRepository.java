@@ -1,4 +1,4 @@
-package modsen.com.repository.connections;
+package com.modsen.repository.connections;
 
 import java.sql.Connection;
 import java.sql.SQLException;

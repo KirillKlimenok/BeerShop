@@ -1,12 +1,10 @@
-package modsen.com.repository.connections;
+package com.modsen.repository.connections;
 
-import com.zaxxer.hikari.HikariConfig;
+import com.modsen.service.property.PropertyFileReaderService;
+import com.modsen.service.property.ReaderPropertyFile;
 import com.zaxxer.hikari.HikariDataSource;
-import modsen.com.service.property.PropertyFileReaderService;
-import modsen.com.service.property.ReaderPropertyFile;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class ConnectionRepositoryImpl implements ConnectionRepository{

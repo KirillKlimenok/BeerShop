@@ -1,4 +1,4 @@
-package modsen.com.dto;
+package com.modsen.dto;
 
 
 import lombok.AllArgsConstructor;

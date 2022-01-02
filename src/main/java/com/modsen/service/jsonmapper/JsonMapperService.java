@@ -1,4 +1,4 @@
-package modsen.com.service.jsonmapper;
+package com.modsen.service.jsonmapper;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 

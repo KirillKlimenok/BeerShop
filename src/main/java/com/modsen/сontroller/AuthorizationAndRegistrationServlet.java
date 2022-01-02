@@ -1,17 +1,17 @@
-package modsen.com.сontroller;
+package com.modsen.сontroller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.modsen.dto.UnregisteredUserDto;
+import com.modsen.exceptions.NotTrueValidationUserException;
+import com.modsen.service.jsonmapper.JsonMapperServiceImpl;
+import com.modsen.service.user.UserService;
+import com.modsen.service.validation.EmailValidatorService;
+import com.modsen.service.validation.LoginValidatorService;
+import com.modsen.service.validation.ValidationsService;
+import com.modsen.service.validation.ValidationsServiceImpl;
+import com.modsen.service.validation.Validator;
 import lombok.extern.log4j.Log4j;
-import modsen.com.dto.UnregisteredUserDto;
-import modsen.com.exceptions.NotTrueValidationUserException;
-import modsen.com.service.user.UserService;
-import modsen.com.service.user.UserServiceImpl;
-import modsen.com.service.jsonmapper.JsonMapperServiceImpl;
-import modsen.com.service.validation.EmailValidatorService;
-import modsen.com.service.validation.LoginValidatorService;
-import modsen.com.service.validation.ValidationsService;
-import modsen.com.service.validation.ValidationsServiceImpl;
-import modsen.com.service.validation.Validator;
+import com.modsen.service.user.UserServiceImpl;
 import org.apache.log4j.Priority;
 
 import javax.servlet.ServletException;

@@ -1,11 +1,11 @@
-package modsen.com.service.user;
+package com.modsen.service.user;
 
-import modsen.com.dto.UnregisteredUserDto;
-import modsen.com.exceptions.NotTrueValidationUserException;
-import modsen.com.repository.user.UserRepository;
-import modsen.com.service.validation.ValidationsService;
-import modsen.com.service.validation.ValidationsServiceImpl;
-import modsen.com.service.validation.Validator;
+import com.modsen.dto.UnregisteredUserDto;
+import com.modsen.exceptions.NotTrueValidationUserException;
+import com.modsen.repository.user.UserRepository;
+import com.modsen.service.validation.ValidationsService;
+import com.modsen.service.validation.ValidationsServiceImpl;
+import com.modsen.service.validation.Validator;
 
 import java.sql.SQLException;
 import java.util.List;

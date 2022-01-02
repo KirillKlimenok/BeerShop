@@ -1,10 +1,10 @@
-package modsen.com.repository.user;
+package com.modsen.repository.user;
 
 import lombok.extern.log4j.Log4j;
-import modsen.com.dto.UnregisteredUserDto;
-import modsen.com.exceptions.NotFoundUserException;
-import modsen.com.repository.connections.ConnectionRepository;
-import modsen.com.repository.connections.ConnectionRepositoryImpl;
+import com.modsen.dto.UnregisteredUserDto;
+import com.modsen.exceptions.NotFoundUserException;
+import com.modsen.repository.connections.ConnectionRepository;
+import com.modsen.repository.connections.ConnectionRepositoryImpl;
 import org.apache.log4j.Priority;
 
 import java.sql.Connection;
@@ -66,7 +66,7 @@ public class UserRepository {
             resultSet.next();
             return !resultSet.getString("id").isEmpty();
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            log.error(e.getMessage());
             return false;
         }
     }
@@ -75,22 +75,23 @@ public class UserRepository {
         try (Connection connection = connectionRepository.connect();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlScriptForWriteUserToken)) {
 
-            preparedStatement.setObject(1,  UUID.fromString(token));
+            preparedStatement.setObject(1, UUID.fromString(token));
             return preparedStatement.execute();
         }
     }
 
     public String getUserId(UnregisteredUserDto user) throws SQLException {
-        Connection connection = connectionRepository.connect();
-        PreparedStatement preparedStatement = connection.prepareStatement(sqlScriptForFindUserForAuth);
-        preparedStatement.setString(1, user.getLogin());
-        preparedStatement.setString(2, user.getPassword());
+        try (Connection connection = connectionRepository.connect();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlScriptForFindUserForAuth)) {
+            preparedStatement.setString(1, user.getLogin());
+            preparedStatement.setString(2, user.getPassword());
 
-        ResultSet resultSet = preparedStatement.executeQuery();
-        if (resultSet.next()) {
-            return resultSet.getString("id");
-        } else {
-            throw new NotFoundUserException(user + "not found");
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getString("id");
+            } else {
+                throw new NotFoundUserException(user + "not found");
+            }
         }
     }
 
