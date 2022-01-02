@@ -47,7 +47,6 @@ public class UserRepository {
              PreparedStatement preparedStatement = connection.prepareStatement(sqlScriptForAddUserInDb)) {
             preparedStatement.setString(1, user.getLogin());
             preparedStatement.setString(2, user.getEmail());
-            preparedStatement.setString(3, user.getPassword());
 
             return preparedStatement.execute();
         }
