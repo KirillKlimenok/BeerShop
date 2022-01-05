@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 import java.util.UUID;
 
 @Log4j
@@ -25,21 +26,15 @@ public class UserRepository {
         this.dataSource = dataSource;
     }
 
-    public String getUserToken(UnregisteredUserDto user) {
+    public Optional<String> getUserToken(UnregisteredUserDto user) throws SQLException {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(SQL_SCRIPT_FOR_GET_USER_TOKEN)) {
-            String userId = getUserId(user);
+            String userId = getUserId(user).get();
             preparedStatement.setObject(1, UUID.fromString(userId));
 
             ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                return resultSet.getString("token");
-            } else {
-                throw new NotFoundUserException(user + " not found");
-            }
-        } catch (SQLException e) {
-            log.error(e.getMessage());
-            throw new NotFoundUserException(user + " not found");
+            resultSet.next();
+            return Optional.ofNullable(resultSet.getString("token"));
         }
     }
 
@@ -54,21 +49,15 @@ public class UserRepository {
         }
     }
 
-    public boolean isRegisteredUser(UnregisteredUserDto user) throws SQLException {
+    public Optional<String> checkUser(UnregisteredUserDto user) throws SQLException {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(SQL_SCRIPT_FOR_FIND_USER_IN_DB)) {
             preparedStatement.setString(1, user.getEmail());
             preparedStatement.setString(2, user.getLogin());
 
             ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                return !resultSet.getString("id").isEmpty();
-            } else {
-                return false;
-            }
-        } catch (SQLException e) {
-            log.error(e.getMessage());
-            throw new SQLException(e.getMessage());
+            resultSet.next();
+            return Optional.ofNullable(resultSet.getString("id"));
         }
     }
 
@@ -81,19 +70,17 @@ public class UserRepository {
         }
     }
 
-    public String getUserId(UnregisteredUserDto user) throws SQLException {
+    public Optional<String> getUserId(UnregisteredUserDto user) throws SQLException {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(SQL_SCRIPT_FOR_FIND_USER_FOR_AUTH)) {
             preparedStatement.setString(1, user.getLogin());
             preparedStatement.setString(2, user.getPassword());
 
             ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                return resultSet.getString("id");
-            } else {
-                throw new NotFoundUserException(user + "not found");
-            }
+            resultSet.next();
+            return Optional.ofNullable(resultSet.getString("id"));
         }
     }
-
 }
+
+
