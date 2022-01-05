@@ -2,6 +2,7 @@ package com.modsen.сontroller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.modsen.entitys.UserRequest;
 import com.modsen.entitys.dto.UnregisteredUserDto;
 import com.modsen.exceptions.NotTrueValidationUserException;
 import com.modsen.repository.user.UserRepository;
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
 @WebServlet(name = "MainServlet", value = "/**")
 @Log4j
@@ -37,6 +39,8 @@ public class MainServlet extends HttpServlet {
     private HikariDataSource hikariDataSource;
     private UserRepository userRepository;
     private static final String FILE_PROPERTY = "config/dataBaseConfig.properties";
+    private static final String REGEX_FOR_EMAIL = "^([a-z0-9_-]+\\.)*[a-z0-9_-]+@[a-z0-9_-]+(\\.[a-z0-9_-]+)*\\.[a-z]{2,6}$";
+    private static final String REGEX_FOR_LOGIN = "[a-zA-Z]{100}";
 
 
     @Override
@@ -51,17 +55,16 @@ public class MainServlet extends HttpServlet {
         String jsonUnregUser = getBodyReq(request);
         try {
             UnregisteredUserDto user = objectMapper.readValue(jsonUnregUser, UnregisteredUserDto.class);
-            if (validationsService.validate(user,validators)) {
-                userService.createNewUser(user, validators);
-                response.setStatus(200);
-            } else {
-                response.sendError(400, "wrong email or password");
-            }
-        } catch (JsonProcessingException | NotTrueValidationUserException e) {
-            log.error(e.getMessage());
-            response.sendError(400, "you entered wrong login or password\n");
-        }
 
+            validationsService.validate(user, validators);
+
+            userService.createNewUser(user, validators);
+            response.setStatus(200);
+        } catch (JsonProcessingException e) {
+            log.error(e.getMessage());
+        } catch (NotTrueValidationUserException e) {
+            response.sendError(400, e.getMessage());
+        }
     }
 
     @Override
@@ -78,9 +81,21 @@ public class MainServlet extends HttpServlet {
 
         hikariDataSource = new HikariDataSource(new HikariConfig(properties));
         userService = new UserServiceImpl(userRepository, validationsService);
+
+        Validator<UserRequest> emailValidator = (obj) -> {
+            if (!Pattern.matches(REGEX_FOR_EMAIL, obj.getEmail())) {
+                throw new NotTrueValidationUserException("Wrong email. please write email for example name@any.damain");
+            }
+        };
+        Validator<UserRequest> loginValidator = (obj) -> {
+            if (!Pattern.matches(REGEX_FOR_LOGIN, obj.getLogin())) {
+                throw new NotTrueValidationUserException("Wrong login. please write login without numbers and use only latin letters");
+            }
+        };
+
         validators = new ArrayList<Validator>() {{
-            add(new EmailValidatorService());
-            add(new LoginValidatorService());
+            add(new EmailValidatorService(emailValidator));
+            add(new LoginValidatorService(loginValidator));
         }};
     }
 

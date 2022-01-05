@@ -1,17 +1,15 @@
 package com.modsen.service;
 
-import com.modsen.entitys.AbstractUser;
+import com.modsen.exceptions.NotTrueValidationUserException;
 
-import java.util.regex.Pattern;
+public class LoginValidatorService implements Validator {
+    private final Validator validator;
+    public LoginValidatorService(Validator validator) {
+        this.validator = validator;
+    }
 
-public class LoginValidatorService<T extends AbstractUser> implements Validator {
     @Override
-    public <E> boolean isValid(E obj) {
-        if(obj instanceof AbstractUser) {
-            T user = (T) obj;
-            return Pattern.matches("[a-zA-Z]{100}",user.getLogin());
-        }else{
-            throw new ClassCastException("Login validation Exception with object" + obj);
-        }
+    public void check(Object user) throws NotTrueValidationUserException {
+        validator.check(user);
     }
 }

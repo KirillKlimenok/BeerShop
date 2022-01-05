@@ -17,19 +17,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void createNewUser(UnregisteredUserDto user, List<Validator> validators) throws NotTrueValidationUserException {
-        if (validationsService.validate(user, validators)) {
-            try {
-                if (!userRepository.isRegisteredUser(user)) {
-                    userRepository.writeUser(user);
-                    String token = userRepository.getUserId(user);
-                    userRepository.writeToken(token);
-                }
-            } catch (SQLException e) {
-                throw new NotTrueValidationUserException("you entered not true login or email\n" + e.getMessage());
+    public void createNewUser(UnregisteredUserDto user, List<Validator> validators) {
+        validationsService.validate(user, validators);
+
+        try {
+            if (!userRepository.isRegisteredUser(user)) {
+                userRepository.writeUser(user);
+                String token = userRepository.getUserId(user);
+                userRepository.writeToken(token);
             }
-        } else {
-            throw new NotTrueValidationUserException("you entered not true login or email");
+        } catch (SQLException e) {
+            throw new NotTrueValidationUserException("you entered not true login or email\n" + e.getMessage());
         }
     }
 
