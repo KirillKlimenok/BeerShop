@@ -1,4 +1,4 @@
-package com.modsen.service.property;
+package com.modsen.service;
 
 import com.modsen.exceptions.FilePropertyNotFoundException;
 import lombok.extern.log4j.Log4j;
@@ -14,20 +14,18 @@ public class PropertyFileReaderService implements ReaderPropertyFile {
     private static final Map<String, Properties> CACHE = new HashMap<>();
 
     @Override
-    public String read(String path, String key) {
+    public String read(String path, String key) throws FilePropertyNotFoundException {
         Properties properties = findProperty(path);
         if (properties == null) {
-            synchronized (this) {
-                try (FileInputStream fileInputStream = new FileInputStream(path)) {
-                    properties = new Properties();
-                    properties.load(fileInputStream);
-                    return properties.getProperty(key);
-                } catch (IOException exception) {
-                    log.error(exception.getMessage());
-                    throw new FilePropertyNotFoundException(exception.getMessage());
-                }
+            try (FileInputStream fileInputStream = new FileInputStream(path)) {
+                properties = new Properties();
+                properties.load(fileInputStream);
+                return properties.getProperty(key);
+            } catch (IOException exception) {
+                log.error(exception.getMessage());
+                throw new FilePropertyNotFoundException(exception.getMessage());
             }
-        }else{
+        } else {
             return properties.getProperty(key);
         }
     }

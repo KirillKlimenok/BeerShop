@@ -1,10 +1,8 @@
-package com.modsen.service.user;
+package com.modsen.service;
 
-import com.modsen.dto.UnregisteredUserDto;
+import com.modsen.entitys.dto.UnregisteredUserDto;
 import com.modsen.exceptions.NotTrueValidationUserException;
 import com.modsen.repository.user.UserRepository;
-import com.modsen.service.validation.ValidationsService;
-import com.modsen.service.validation.Validator;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -19,10 +17,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void createNewUser(UnregisteredUserDto user, List<Validator> validators) {
+    public void createNewUser(UnregisteredUserDto user, List<Validator> validators) throws NotTrueValidationUserException {
         if (validationsService.validate(user, validators)) {
             try {
-                if(!userRepository.isRegisteredUser(user)) {
+                if (!userRepository.isRegisteredUser(user)) {
                     userRepository.writeUser(user);
                     String token = userRepository.getUserId(user);
                     userRepository.writeToken(token);
@@ -30,7 +28,7 @@ public class UserServiceImpl implements UserService {
             } catch (SQLException e) {
                 throw new NotTrueValidationUserException("you entered not true login or email\n" + e.getMessage());
             }
-        }else{
+        } else {
             throw new NotTrueValidationUserException("you entered not true login or email");
         }
     }

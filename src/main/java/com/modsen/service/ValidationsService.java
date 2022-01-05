@@ -1,6 +1,6 @@
-package com.modsen.service.validation;
+package com.modsen.service;
 
-import com.modsen.dto.UnregisteredUserDto;
+import com.modsen.entitys.dto.UnregisteredUserDto;
 
 import java.util.List;
 
