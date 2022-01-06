@@ -25,6 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
@@ -43,19 +44,27 @@ public class MainServlet extends HttpServlet {
 
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        UserRequest user = objectMapper.readValue(getBodyReq(request), UserRequest.class);
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
+            UserRequest user = objectMapper.readValue(getBodyReq(request), UserRequest.class);
             UserResponse token = userService.getTokenUser(user);
+
             response.setStatus(200);
+            response.setContentType("text/html");
+            PrintWriter printWriter = response.getWriter();
+            printWriter.print(token);
+            printWriter.close();
         } catch (SQLException e) {
             log.error(e.getMessage());
             response.sendError(500, "User not found");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+            response.sendError(500, "Server Exception");
         }
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String jsonUnregUser = getBodyReq(request);
         try {
             UserRequest user = objectMapper.readValue(jsonUnregUser, UserRequest.class);
@@ -66,13 +75,13 @@ public class MainServlet extends HttpServlet {
             response.setStatus(200);
         } catch (JsonProcessingException e) {
             log.error(e.getMessage());
-            response.sendError(500,"please try again");
+            response.sendError(500, "please try again");
         } catch (ValidationException e) {
             log.error(e.getMessage());
             response.sendError(400, e.getMessage());
         } catch (SQLException e) {
             log.error(e.getMessage());
-            response.sendError(500,e.getMessage()+"\n please try again");
+            response.sendError(500, e.getMessage() + "\n please try again");
         }
     }
 
