@@ -65,9 +65,9 @@ public class MainServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String jsonUnregUser = getBodyReq(request);
+        String jsonUser = getBodyReq(request);
         try {
-            UserRequest user = objectMapper.readValue(jsonUnregUser, UserRequest.class);
+            UserRequest user = objectMapper.readValue(jsonUser, UserRequest.class);
 
             validationsService.validate(user, validators);
 
