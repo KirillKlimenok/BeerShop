@@ -1,24 +1,23 @@
 package com.modsen.service;
 
-import com.modsen.entitys.UserRequest;
-import com.modsen.exceptions.ValidationException;
+import com.modsen.exception.ValidationException;
 
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
-public class LoginValidatorService implements Validator {
-    private final Validator validator;
-    private static final String REGEX_FOR_LOGIN = "[a-zA-Z]{100}";
+public class LoginValidatorService<T> implements Validator<T> {
+    private final Function<T, String> function;
+    private static final String REGEX_FOR_LOGIN = "[a-zA-Z]{5,100}";
 
-    public LoginValidatorService() {
-        this.validator = (Validator<UserRequest>) (obj) -> {
-            if (!Pattern.matches(REGEX_FOR_LOGIN, obj.getLogin())) {
-                throw new ValidationException("Wrong login. please write login without numbers and use only latin letters");
-            }
-        };
+    public LoginValidatorService(Function<T, String> function) {
+        this.function = function;
     }
 
     @Override
-    public void check(Object user) throws ValidationException {
-        validator.check(user);
+    public void check(T user) {
+        String email = function.apply(user);
+        if(!Pattern.matches(REGEX_FOR_LOGIN, email)){
+            throw new ValidationException("Wrong login. please write login without numbers and use only latin letters");
+        }
     }
 }

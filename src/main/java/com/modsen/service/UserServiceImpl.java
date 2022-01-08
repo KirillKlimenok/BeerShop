@@ -1,56 +1,55 @@
 package com.modsen.service;
 
-import com.modsen.entitys.UserRequest;
-import com.modsen.entitys.UserResponse;
-import com.modsen.entitys.dto.UnregisteredUserDto;
-import com.modsen.exceptions.NotFoundUserException;
+import com.modsen.exception.UserRegistrationException;
+import com.modsen.сontroller.model.UserRequest;
+import com.modsen.сontroller.model.UserResponse;
+import com.modsen.repository.user.dto.UnregisteredUserDto;
+import com.modsen.exception.UserNotFoundException;
 import com.modsen.repository.user.UserRepository;
+import lombok.AllArgsConstructor;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
+@AllArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
-    private final ValidationsService validationsService;
-    private final List<Validator> validators;
+    private final List<Validator<UserRequest>> validators;
+    private final TokenService tokenService;
 
-    public UserServiceImpl(UserRepository userRepository, ValidationsService validationsService, List<Validator> validators) {
-        this.userRepository = userRepository;
-        this.validationsService = validationsService;
-        this.validators = validators;
+    @Override
+    public void createNewUser(UserRequest user) throws SQLException, UserRegistrationException {
+        validators.forEach(x -> x.check(user));
+
+        UnregisteredUserDto userDto = new UnregisteredUserDto(user.getLogin(), String.valueOf(Objects.hash(user.getPassword())), user.getEmail(), tokenService.generateNewToken());
+
+        isRegisteredUser(userDto.getEmail(), userDto.getLogin());
+
+        userRepository.save(userDto);
     }
 
     @Override
-    public void createNewUser(UserRequest user) throws SQLException {
-        UnregisteredUserDto userDto = new UnregisteredUserDto(user.getLogin(), user.getPassword(), user.getEmail());
+    public UserResponse getTokenUser(UserRequest user) throws SQLException, UserNotFoundException {
+        validators.forEach(x -> x.check(user));
 
-        validationsService.validate(userDto, validators);
+        Optional<String> optional = userRepository.getUserToken(user.getLogin(), String.valueOf(Objects.hash(user.getPassword())));
 
-        if (!isRegisteredUser(userDto)) {
-            userRepository.writeUser(userDto);
-            Optional<String> optional = userRepository.getUserId(userDto);
-            if (optional.isPresent()) {
-                String token = optional.get();
-                userRepository.writeToken(token);
-            }
+        UserResponse userResponse = optional.map(UserResponse::new).orElse(null);
+        if (userResponse == null) {
+            throw new UserNotFoundException("user not found");
+        } else {
+            return userResponse;
         }
     }
 
-    @Override
-    public UserResponse getTokenUser(UserRequest userRequest) throws SQLException {
-        UnregisteredUserDto userDto = new UnregisteredUserDto(userRequest);
-        Optional<String> optional = userRepository.getUserToken(userDto);
-
-        if (!optional.isPresent()) {
-            throw new NotFoundUserException("Not found your account. please check your data and try again");
+    private void isRegisteredUser(String email, String login) throws SQLException, UserRegistrationException {
+        if (userRepository.isUserExist("login", login)) {
+            throw new UserRegistrationException("User with this " + login + " login already registered");
         }
-        String token = optional.get();
-        return new UserResponse(token);
-    }
-
-    private boolean isRegisteredUser(UnregisteredUserDto userDto) throws SQLException {
-        Optional<String> optional = userRepository.checkUser(userDto);
-        return optional.isPresent();
+        if (userRepository.isUserExist("email", email)) {
+            throw new UserRegistrationException("User with this " + email + " email already registered");
+        }
     }
 }

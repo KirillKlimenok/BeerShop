@@ -1,4 +1,4 @@
-package com.modsen.entitys;
+package com.modsen.сontroller.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
