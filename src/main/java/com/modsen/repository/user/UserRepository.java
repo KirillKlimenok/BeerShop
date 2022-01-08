@@ -40,6 +40,7 @@ public class UserRepository {
             preparedStatement.setString(3, user.getEmail());
             preparedStatement.setString(4, user.getPassword());
             preparedStatement.setObject(5, user.getToken());
+
             preparedStatement.execute();
             connection.commit();
         }
