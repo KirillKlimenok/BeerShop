@@ -3,9 +3,9 @@ package com.modsen.service;
 import com.modsen.exception.UserRegistrationException;
 import com.modsen.сontroller.model.UserRequest;
 import com.modsen.сontroller.model.UserResponse;
-import com.modsen.repository.user.dto.UnregisteredUserDto;
+import com.modsen.service.dto.UnregisteredUserDto;
 import com.modsen.exception.UserNotFoundException;
-import com.modsen.repository.user.UserRepository;
+import com.modsen.repository.UserRepository;
 import lombok.AllArgsConstructor;
 
 import java.sql.SQLException;
