@@ -1,6 +1,6 @@
-package com.modsen.repository.user;
+package com.modsen.repository;
 
-import com.modsen.repository.user.dto.UnregisteredUserDto;
+import com.modsen.service.dto.UnregisteredUserDto;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j;
 

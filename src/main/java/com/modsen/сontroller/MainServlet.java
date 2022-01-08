@@ -9,7 +9,7 @@ import com.modsen.service.TokenService;
 import com.modsen.сontroller.model.UserRequest;
 import com.modsen.сontroller.model.UserResponse;
 import com.modsen.exception.ValidationException;
-import com.modsen.repository.user.UserRepository;
+import com.modsen.repository.UserRepository;
 import com.modsen.service.EmailValidatorService;
 import com.modsen.service.LoginValidatorService;
 import com.modsen.service.UserService;

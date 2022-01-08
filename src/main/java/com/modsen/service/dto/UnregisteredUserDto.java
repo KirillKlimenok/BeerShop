@@ -1,4 +1,4 @@
-package com.modsen.repository.user.dto;
+package com.modsen.service.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
