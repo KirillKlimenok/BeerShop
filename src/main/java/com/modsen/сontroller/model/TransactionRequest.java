@@ -1,13 +1,15 @@
 package com.modsen.сontroller.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class BeerRequest {
-    private int idBeer;
+public class TransactionRequest {
+    private String userToken;
     private int count;
+
+    public TransactionRequest(int count) {
+        this.count = count;
+    }
 }
