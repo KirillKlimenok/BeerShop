@@ -3,6 +3,7 @@ package com.modsen.сontroller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
+import com.modsen.exception.BeerNotFoundException;
 import com.modsen.exception.PropertyNotFoundException;
 import com.modsen.exception.TransactionNotFoundException;
 import com.modsen.exception.UserNotFoundException;
@@ -57,6 +58,7 @@ public class MainServlet extends HttpServlet {
     private static final String FILE_PROPERTY_CONFIG = "config/config.properties";
     public static final String NAME_PROPERTY_WITH_MIN_COUNT_TRANSACTION = "minCountTransactionOnPage";
     public static final String NAME_PROPERTY_WITH_MAX_COUNT_TRANSACTION = "maxCountTransactionOnPage";
+    public static final String NAME_ACCESS_TOKEN = "App-Auth";
     private final Function<UserRequest, String> functionGetEmailUserRequest = UserRequest::getEmail;
     private final Function<UserRequest, String> functionGetLoginUserRequest = UserRequest::getLogin;
     private final Function<TransactionRequest, Integer> functionGetCountTransactions = TransactionRequest::getCount;
@@ -71,7 +73,7 @@ public class MainServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
-            String userToken = request.getHeader("App-Auth");
+            String userToken = request.getHeader(NAME_ACCESS_TOKEN);
             if (userToken == null) {
                 try {
                     UserRequest user = objectMapper.readValue(getBodyReq(request), UserRequest.class);
@@ -79,7 +81,7 @@ public class MainServlet extends HttpServlet {
 
                     response.setStatus(200);
                     response.setContentType("text/html");
-                    response.setHeader("App-Auth", userResponse.getToken());
+                    response.setHeader(NAME_ACCESS_TOKEN, userResponse.getToken());
                 } catch (MismatchedInputException e) {
                     log.warn(e.getMessage());
                     response.sendError(400, "Please log in, before do any actions");
@@ -116,12 +118,25 @@ public class MainServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String jsonUser = getBodyReq(request);
         try {
-            UserRequest user = objectMapper.readValue(jsonUser, UserRequest.class);
+            String userToken = request.getHeader(NAME_ACCESS_TOKEN);
+            String bodyRequest = getBodyReq(request);
+            if (userToken == null) {
+                UserRequest user = objectMapper.readValue(bodyRequest, UserRequest.class);
 
-            userService.createNewUser(user);
-            response.setStatus(200);
+                userService.createNewUser(user);
+                response.setStatus(200);
+            } else {
+                try {
+                    List<BeerRequest> buysBeer = List.of(objectMapper.readValue(bodyRequest, BeerRequest[].class));
+                    userActionService.buyBeer(buysBeer, userToken);
+                    response.setStatus(200);
+                } catch (BeerNotFoundException e) {
+                    response.sendError(400, e.getMessage());
+                } catch (UserNotFoundException e) {
+                    response.sendError(401, e.getMessage());
+                }
+            }
         } catch (JsonProcessingException e) {
             log.error(e.getMessage());
             response.sendError(500, "please try again" + e.getMessage());
@@ -151,6 +166,7 @@ public class MainServlet extends HttpServlet {
         LoginValidatorService<UserRequest> loginValidator = new LoginValidatorService(functionGetLoginUserRequest);
         transactionsValidators = List.of(countTransactionValidatorService);
         userRequestValidators = List.of(emailValidator, loginValidator);
+        beerValidators = List.of();
 
 
         HikariConfig hikariConfig = new HikariConfig(dataBaseProperty);

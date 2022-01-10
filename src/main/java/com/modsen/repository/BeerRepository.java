@@ -9,6 +9,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @AllArgsConstructor
@@ -71,10 +73,15 @@ public class BeerRepository {
         }
     }
 
-    public ResultSet getAllBeers() throws SQLException {
+    public List<Integer> getAllBeers() throws SQLException {
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement()) {
-            return statement.executeQuery(SQL_SCRIPT_FOR_GET_ALL_BEERS);
+            ResultSet resultSet = statement.executeQuery(SQL_SCRIPT_FOR_GET_ALL_BEERS);
+            List<Integer> beersId = new ArrayList<>();
+            while (resultSet.next()) {
+                beersId.add(resultSet.getInt("id"));
+            }
+            return beersId;
         }
     }
 

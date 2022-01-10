@@ -16,13 +16,11 @@ import com.modsen.сontroller.model.TransactionResponse;
 import lombok.AllArgsConstructor;
 
 import java.sql.Date;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @AllArgsConstructor
 public class UserActionServiceImpl implements UserActionService {
@@ -35,31 +33,29 @@ public class UserActionServiceImpl implements UserActionService {
 
     @Override
     public void buyBeer(List<BeerRequest> listBeersRequest, String userToken) throws SQLException, UserNotFoundException, BeerNotFoundException {
-        listBeersRequest.forEach(beer -> beerValidators.forEach(validator -> validator.check(beer)));
-
-        if (userRepository.isUserExist(UUID.fromString(userToken))) {
+        if (!userRepository.isUserExist(UUID.fromString(userToken))) {
             throw new UserNotFoundException("User with this " + userToken + " token not found. please register before by purchase");
         }
 
-        ResultSet resultSet = beerRepository.getAllBeers();
+        listBeersRequest.forEach(beer -> beerValidators.forEach(validator -> validator.check(beer)));
 
-        if (resultSet.next()) {
-            List<Integer> idBeerInBd = new ArrayList<>();
-            while (resultSet.next()) {
-                idBeerInBd.add(resultSet.getInt("id"));
-            }
-            //todo переписать(в случе если id запроса не нашёлся, выбрасывать ошибку с указанием проблемы)
-            List<BeerRequest> trueBeerId = listBeersRequest.stream().filter(x -> idBeerInBd.contains(x.getIdBeer())).collect(Collectors.toList());
-            Date date = new Date(System.currentTimeMillis());
-            for (BeerRequest beerRequest : trueBeerId) {
-                int idBeer = beerRequest.getIdBeer();
-                int countBeer = beerRequest.getCount();
-                beerRepository.removeCountBeer(idBeer, countBeer);
-                TransactionDto transaction = new TransactionDto(idBeer, countBeer, date);
-                transactionRepository.save(transaction, userToken);
-            }
-        } else {
+        List<Integer> idBeerInBd = beerRepository.getAllBeers();
+
+        if (idBeerInBd.isEmpty()) {
             throw new BeerNotFoundException("List beer is clear");
+        }
+
+        if (!listBeersRequest.stream().allMatch(x -> idBeerInBd.contains(x.getIdBeer()))) {
+            throw new BeerNotFoundException("Please enter only existing positions");
+        }
+
+        Date date = new Date(System.currentTimeMillis());
+        for (BeerRequest beerRequest : listBeersRequest) {
+            int idBeer = beerRequest.getIdBeer();
+            int countBeer = beerRequest.getCount();
+            beerRepository.removeCountBeer(idBeer, countBeer);
+            TransactionDto transaction = new TransactionDto(idBeer, countBeer, date);
+            transactionRepository.save(transaction, userToken);
         }
 
     }
