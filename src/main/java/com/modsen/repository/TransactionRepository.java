@@ -27,10 +27,10 @@ public class TransactionRepository {
             preparedStatement.setObject(1, UUID.fromString(userToken));
             preparedStatement.setInt(2, countTransaction);
             ResultSet resultSet = preparedStatement.executeQuery();
-            int count = resultSet.getMetaData().getColumnCount();
             List<UserTransactions> userTransactions = new ArrayList<>();
-            for (int i = 1; i <= count; i++) {
-                userTransactions.add(resultSet.getObject(i, UserTransactions.class));
+
+            while (resultSet.next()) {
+                userTransactions.add(new UserTransactions(resultSet.getInt("id_beer"), resultSet.getInt("count"), resultSet.getDate("date_time")));
             }
             return userTransactions;
         }

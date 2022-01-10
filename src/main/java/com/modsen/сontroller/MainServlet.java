@@ -11,6 +11,7 @@ import com.modsen.exception.ValidationException;
 import com.modsen.repository.BeerRepository;
 import com.modsen.repository.TransactionRepository;
 import com.modsen.repository.UserRepository;
+import com.modsen.service.CountTransactionValidatorService;
 import com.modsen.service.EmailValidatorService;
 import com.modsen.service.LoginValidatorService;
 import com.modsen.service.TokenService;
@@ -49,9 +50,13 @@ public class MainServlet extends HttpServlet {
     private UserService userService;
     private List<Validator<UserRequest>> userRequestValidators;
     private List<Validator<BeerRequest>> beerValidators;
+    private List<Validator<TransactionRequest>> transactionsValidators;
     private HikariDataSource hikariDataSource;
     private UserRepository userRepository;
-    private static final String FILE_PROPERTY = "config/dataBaseConfig.properties";
+    private static final String FILE_PROPERTY_DATABASE_CONFIG = "config/dataBaseConfig.properties";
+    private static final String FILE_PROPERTY_CONFIG = "config/config.properties";
+    public static final String NAME_PROPERTY_WITH_MIN_COUNT_TRANSACTION = "minCountTransactionOnPage";
+    public static final String NAME_PROPERTY_WITH_MAX_COUNT_TRANSACTION = "maxCountTransactionOnPage";
     private final Function<UserRequest, String> functionGetEmailUserRequest = UserRequest::getEmail;
     private final Function<UserRequest, String> functionGetLoginUserRequest = UserRequest::getLogin;
     private final Function<TransactionRequest, Integer> functionGetCountTransactions = TransactionRequest::getCount;
@@ -66,7 +71,7 @@ public class MainServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
-            String userToken = request.getHeader("Authorization");
+            String userToken = request.getHeader("App-Auth");
             if (userToken == null) {
                 try {
                     UserRequest user = objectMapper.readValue(getBodyReq(request), UserRequest.class);
@@ -74,24 +79,28 @@ public class MainServlet extends HttpServlet {
 
                     response.setStatus(200);
                     response.setContentType("text/html");
-                    response.setHeader("Authorization", userResponse.getToken());
+                    response.setHeader("App-Auth", userResponse.getToken());
                 } catch (MismatchedInputException e) {
+                    log.warn(e.getMessage());
                     response.sendError(400, "Please log in, before do any actions");
                 }
             } else {
                 String bodyRequest = getBodyReq(request);
                 try (PrintWriter printWriter = response.getWriter()) {
-                    printWriter.println(bodyRequest);
                     TransactionRequest transactionRequest = objectMapper.readValue(bodyRequest, TransactionRequest.class);
                     transactionRequest.setUserToken(userToken);
-                    printWriter.println(transactionRequest);
                     List<TransactionResponse> transactionResponses = userActionService.getTransactions(transactionRequest);
-                    printWriter.println(transactionRequest);
-                    printWriter.println(transactionResponses);
                     response.setStatus(200);
                     printWriter.println(objectMapper.writeValueAsString(transactionResponses));
+                } catch (UserNotFoundException e) {
+                    log.warn(e.getMessage());
+                    response.sendError(401, e.getMessage());
                 } catch (TransactionNotFoundException e) {
+                    log.warn(e.getMessage());
                     response.sendError(400, e.getMessage());
+                } catch (MismatchedInputException e) {
+                    log.error(e.getMessage());
+                    response.sendError(400, "You entered wrong data. Please check data who you send");
                 }
             }
         } catch (SQLException e) {
@@ -102,8 +111,6 @@ public class MainServlet extends HttpServlet {
             response.sendError(500, "Server Exception");
         } catch (UserNotFoundException e) {
             response.sendError(400, e.getMessage());
-        }catch (Exception e){
-            response.sendError(500,e.getMessage());
         }
     }
 
@@ -131,16 +138,25 @@ public class MainServlet extends HttpServlet {
 
     @Override
     public void init() {
+        Properties dataBaseProperty = new Properties();
+        Properties configProperty = new Properties();
+        loadProperties(dataBaseProperty, FILE_PROPERTY_DATABASE_CONFIG);
+        loadProperties(configProperty, FILE_PROPERTY_CONFIG);
+
+        int maxCountTransactions = Integer.parseInt(configProperty.getProperty(NAME_PROPERTY_WITH_MAX_COUNT_TRANSACTION).trim());
+        int minCountTransactions = Integer.parseInt(configProperty.getProperty(NAME_PROPERTY_WITH_MIN_COUNT_TRANSACTION).trim());
+
+        CountTransactionValidatorService<TransactionRequest> countTransactionValidatorService = new CountTransactionValidatorService(functionGetCountTransactions, maxCountTransactions, minCountTransactions);
         EmailValidatorService<UserRequest> emailValidator = new EmailValidatorService(functionGetEmailUserRequest);
         LoginValidatorService<UserRequest> loginValidator = new LoginValidatorService(functionGetLoginUserRequest);
+        transactionsValidators = List.of(countTransactionValidatorService);
         userRequestValidators = List.of(emailValidator, loginValidator);
 
-        Properties properties = new Properties();
-        loadProperties(properties);
 
-        HikariConfig hikariConfig = new HikariConfig(properties);
+        HikariConfig hikariConfig = new HikariConfig(dataBaseProperty);
         hikariConfig.setAutoCommit(false);
         hikariDataSource = new HikariDataSource(hikariConfig);
+
 
         dataSource = hikariDataSource;
         dateTimeFormatter = DateTimeFormatter.ofPattern(DATE_PATTERN);
@@ -150,7 +166,7 @@ public class MainServlet extends HttpServlet {
         userService = new UserServiceImpl(userRepository, userRequestValidators, tokenService);
         beerRepository = new BeerRepository(dataSource);
         transactionRepository = new TransactionRepository(dataSource);
-        userActionService = new UserActionServiceImpl(beerRepository, userRepository, transactionRepository, beerValidators, dateTimeFormatter);
+        userActionService = new UserActionServiceImpl(beerRepository, userRepository, transactionRepository, beerValidators, transactionsValidators, dateTimeFormatter);
     }
 
     @Override
@@ -159,9 +175,9 @@ public class MainServlet extends HttpServlet {
         super.destroy();
     }
 
-    private void loadProperties(Properties properties) {
+    private void loadProperties(Properties properties, String path) {
         try {
-            properties.load(this.getClass().getClassLoader().getResourceAsStream(FILE_PROPERTY));
+            properties.load(this.getClass().getClassLoader().getResourceAsStream(path));
         } catch (IOException e) {
             log.error(e.getMessage());
             throw new PropertyNotFoundException(e.getMessage());

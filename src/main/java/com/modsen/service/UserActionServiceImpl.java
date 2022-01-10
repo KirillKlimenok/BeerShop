@@ -1,6 +1,8 @@
 package com.modsen.service;
 
 import com.modsen.exception.BeerNotFoundException;
+import com.modsen.exception.TooMuchValueCountTransactionException;
+import com.modsen.exception.TooSmallValueCountTransactionException;
 import com.modsen.exception.TransactionNotFoundException;
 import com.modsen.exception.UserNotFoundException;
 import com.modsen.repository.BeerRepository;
@@ -28,6 +30,7 @@ public class UserActionServiceImpl implements UserActionService {
     private UserRepository userRepository;
     private TransactionRepository transactionRepository;
     private List<Validator<BeerRequest>> beerValidators;
+    private List<Validator<TransactionRequest>> transactionsValidator;
     private DateTimeFormatter dateTimeFormatter;
 
     @Override
@@ -63,28 +66,31 @@ public class UserActionServiceImpl implements UserActionService {
 
     @Override
     public List<TransactionResponse> getTransactions(TransactionRequest transactionRequest) throws SQLException, TransactionNotFoundException, UserNotFoundException {
-        if (transactionRequest.getCount() < 5) {
-            transactionRequest.setCount(5);
-        } else if (transactionRequest.getCount() > 20) {
-            transactionRequest.setCount(20);
-        }
-
-        if (userRepository.isUserExist(UUID.fromString(transactionRequest.getUserToken()))) {
-            List<UserTransactions> userTransactions = transactionRepository.getTransaction(transactionRequest.getUserToken(), transactionRequest.getCount());
-            if (!userTransactions.isEmpty()) {
-                List<TransactionResponse> transactions = new ArrayList<>();
-                for (UserTransactions trans : userTransactions) {
-                    int idBeer = (int) trans.getId_beer();
-                    int countBeer = (int) trans.getCount();
-                    String date = trans.getDate_time().toLocalDate().format(dateTimeFormatter);
-
-                    transactions.add(new TransactionResponse(idBeer, countBeer, date));
-                }
-                return transactions;
-            }
-        } else {
+        if (!userRepository.isUserExist(UUID.fromString(transactionRequest.getUserToken()))) {
             throw new UserNotFoundException("User with this " + transactionRequest.getUserToken() + " token not found. please register before by purchase");
         }
-        throw new TransactionNotFoundException("Transactions not found, please try again");
+
+        try {
+            transactionsValidator.forEach(x -> x.check(transactionRequest));
+        } catch (TooMuchValueCountTransactionException e) {
+            transactionRequest.setCount(20);
+        } catch (TooSmallValueCountTransactionException e) {
+            transactionRequest.setCount(5);
+        }
+
+        List<UserTransactions> userTransactions = transactionRepository.getTransaction(transactionRequest.getUserToken(), transactionRequest.getCount());
+        if (userTransactions.isEmpty()) {
+            throw new TransactionNotFoundException("Transactions not found, please try again");
+        }
+
+        List<TransactionResponse> transactions = new ArrayList<>();
+        for (UserTransactions trans : userTransactions) {
+            int idBeer = trans.getId_beer();
+            int countBeer = trans.getCount();
+            String date = trans.getDate_time().toLocalDate().format(dateTimeFormatter);
+
+            transactions.add(new TransactionResponse(idBeer, countBeer, date));
+        }
+        return transactions;
     }
 }
