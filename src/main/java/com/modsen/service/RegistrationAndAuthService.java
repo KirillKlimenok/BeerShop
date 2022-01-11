@@ -7,7 +7,7 @@ import com.modsen.сontroller.model.UserResponse;
 
 import java.sql.SQLException;
 
-public interface UserService {
+public interface RegistrationAndAuthService {
     void createNewUser(UserRequest unregisteredUserDto) throws SQLException, UserRegistrationException;
     UserResponse getTokenUser(UserRequest unregisteredUserDto) throws SQLException, UserNotFoundException;
 }

@@ -1,20 +1,19 @@
 package com.modsen.service;
 
+import com.modsen.exception.UserNotFoundException;
 import com.modsen.exception.UserRegistrationException;
+import com.modsen.repository.UserRepository;
+import com.modsen.service.dto.UnregisteredUserDto;
 import com.modsen.сontroller.model.UserRequest;
 import com.modsen.сontroller.model.UserResponse;
-import com.modsen.service.dto.UnregisteredUserDto;
-import com.modsen.exception.UserNotFoundException;
-import com.modsen.repository.UserRepository;
 import lombok.AllArgsConstructor;
 
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 @AllArgsConstructor
-public class UserServiceImpl implements UserService {
+public class RegistrationAndAuthServiceImpl implements RegistrationAndAuthService {
     private final UserRepository userRepository;
     private final List<Validator<UserRequest>> validators;
     private final TokenService tokenService;
@@ -39,9 +38,10 @@ public class UserServiceImpl implements UserService {
     public UserResponse getTokenUser(UserRequest user) throws SQLException, UserNotFoundException {
         validators.forEach(x -> x.check(user));
 
-        Optional<String> optional = userRepository.getUserToken(user.getLogin(), String.valueOf(Objects.hash(user.getPassword())));
-
-        return optional.map(UserResponse::new).orElseThrow(() -> new UserNotFoundException("User not found"));
+        return userRepository.
+                getUserToken(user.getLogin(), String.valueOf(Objects.hash(user.getPassword()))).
+                map(UserResponse::new).
+                orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 
     private void checkIsRegisteredUser(String email, String login) throws SQLException, UserRegistrationException {

@@ -1,4 +1,4 @@
-package com.modsen.сontroller.model;
+package com.modsen.repository.entytie;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BeerRequest {
-    private int idBeer;
-    private String countJson;
+public class BeerType {
+    private String name;
 }
