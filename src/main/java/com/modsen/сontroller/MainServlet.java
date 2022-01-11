@@ -42,7 +42,6 @@ import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Properties;
-import java.util.function.Function;
 
 @Log4j
 @WebServlet(name = "MainServlet", value = "/*")
@@ -59,9 +58,6 @@ public class MainServlet extends HttpServlet {
     public static final String NAME_PROPERTY_WITH_MIN_COUNT_TRANSACTION = "minCountTransactionOnPage";
     public static final String NAME_PROPERTY_WITH_MAX_COUNT_TRANSACTION = "maxCountTransactionOnPage";
     public static final String NAME_ACCESS_TOKEN = "App-Auth";
-    private final Function<UserRequest, String> functionGetEmailUserRequest = UserRequest::getEmail;
-    private final Function<UserRequest, String> functionGetLoginUserRequest = UserRequest::getLogin;
-    private final Function<TransactionRequest, Integer> functionGetCountTransactions = TransactionRequest::getCount;
     private TokenService tokenService;
     private BeerRepository beerRepository;
     private TransactionRepository transactionRepository;
@@ -163,13 +159,12 @@ public class MainServlet extends HttpServlet {
         int maxCountTransactions = Integer.parseInt(configProperty.getProperty(NAME_PROPERTY_WITH_MAX_COUNT_TRANSACTION).trim());
         int minCountTransactions = Integer.parseInt(configProperty.getProperty(NAME_PROPERTY_WITH_MIN_COUNT_TRANSACTION).trim());
 
-        CountTransactionValidatorService<TransactionRequest> countTransactionValidatorService = new CountTransactionValidatorService(functionGetCountTransactions, maxCountTransactions, minCountTransactions);
-        EmailValidatorService<UserRequest> emailValidator = new EmailValidatorService(functionGetEmailUserRequest);
-        LoginValidatorService<UserRequest> loginValidator = new LoginValidatorService(functionGetLoginUserRequest);
+        CountTransactionValidatorService<TransactionRequest> countTransactionValidatorService = new CountTransactionValidatorService<>(TransactionRequest::getCount, maxCountTransactions, minCountTransactions);
+        EmailValidatorService<UserRequest> emailValidator = new EmailValidatorService<>(UserRequest::getEmail);
+        LoginValidatorService<UserRequest> loginValidator = new LoginValidatorService<>(UserRequest::getLogin);
         transactionsValidators = List.of(countTransactionValidatorService);
         userRequestValidators = List.of(emailValidator, loginValidator);
         beerValidators = List.of();
-
 
         HikariConfig hikariConfig = new HikariConfig(dataBaseProperty);
         hikariConfig.setAutoCommit(false);
