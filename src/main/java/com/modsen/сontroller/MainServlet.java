@@ -88,12 +88,14 @@ public class MainServlet extends HttpServlet {
                 }
             } else {
                 String bodyRequest = getBodyReq(request);
-                try (PrintWriter printWriter = response.getWriter()) {
+                try {
                     TransactionRequest transactionRequest = objectMapper.readValue(bodyRequest, TransactionRequest.class);
                     transactionRequest.setUserToken(userToken);
                     List<TransactionResponse> transactionResponses = userActionService.getTransactions(transactionRequest);
                     response.setStatus(200);
+                    PrintWriter printWriter = response.getWriter();
                     printWriter.println(objectMapper.writeValueAsString(transactionResponses));
+                    printWriter.close();
                 } catch (UserNotFoundException e) {
                     log.warn(e.getMessage());
                     response.sendError(401, e.getMessage());
@@ -211,18 +213,3 @@ public class MainServlet extends HttpServlet {
         return stringBuilder.toString();
     }
 }
-/*
-                   try (PrintWriter writer = response.getWriter()){
-                        List<BeerRequest> beerRequest = List.of(objectMapper.readValue(bodyRequest, BeerRequest[].class));
-                        userActionService.buyBeer(beerRequest, userToken);
-
-                        response.setStatus(200);
-                        writer.print("done");
-                    } catch (MismatchedInputException e2) {
-                        log.error(e2.getMessage());
-                        response.sendError(500, e2.getMessage());
-                    } catch (BeerNotFoundException beerNotFoundException) {
-                        log.error(beerNotFoundException.getMessage());
-                        response.sendError(400, beerNotFoundException.getMessage());
-                    }
-*/
