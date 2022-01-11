@@ -1,0 +1,7 @@
+/.idea/
+/.gitignore
+/BeerShop.iml
+/src/main/resources/META-INF/
+/target/
+/src/test/
+/src/main/resources/any.json
