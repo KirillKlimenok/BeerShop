@@ -23,9 +23,14 @@ public class UserServiceImpl implements UserService {
     public void createNewUser(UserRequest user) throws SQLException, UserRegistrationException {
         validators.forEach(x -> x.check(user));
 
-        UnregisteredUserDto userDto = new UnregisteredUserDto(user.getLogin(), String.valueOf(Objects.hash(user.getPassword())), user.getEmail(), tokenService.generateNewToken());
+        UnregisteredUserDto userDto = UnregisteredUserDto.builder().
+                login(user.getLogin()).
+                password(String.valueOf(Objects.hash(user.getPassword()))).
+                email(user.getEmail()).
+                token(tokenService.generateNewToken()).
+                build();
 
-        isRegisteredUser(userDto.getEmail(), userDto.getLogin());
+        checkIsRegisteredUser(userDto.getEmail(), userDto.getLogin());
 
         userRepository.save(userDto);
     }
@@ -36,19 +41,16 @@ public class UserServiceImpl implements UserService {
 
         Optional<String> optional = userRepository.getUserToken(user.getLogin(), String.valueOf(Objects.hash(user.getPassword())));
 
-        UserResponse userResponse = optional.map(UserResponse::new).orElse(null);
-        if (userResponse == null) {
-            throw new UserNotFoundException("user not found");
-        } else {
-            return userResponse;
-        }
+        return optional.map(UserResponse::new).orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 
-    private void isRegisteredUser(String email, String login) throws SQLException, UserRegistrationException {
-        if (userRepository.isUserExist("login", login)) {
+    private void checkIsRegisteredUser(String email, String login) throws SQLException, UserRegistrationException {
+        List<String> list = userRepository.getListUsersWithSameLoginOrPassword(login, email);
+
+        if (list.stream().anyMatch(x -> x.contains(login))) {
             throw new UserRegistrationException("User with this " + login + " login already registered");
         }
-        if (userRepository.isUserExist("email", email)) {
+        if (list.stream().anyMatch(x -> x.contains(email))) {
             throw new UserRegistrationException("User with this " + email + " email already registered");
         }
     }

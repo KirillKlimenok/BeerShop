@@ -2,19 +2,19 @@ package com.modsen.сontroller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.modsen.exception.UserNotFoundException;
 import com.modsen.exception.PropertyNotFoundException;
+import com.modsen.exception.UserNotFoundException;
 import com.modsen.exception.UserRegistrationException;
-import com.modsen.service.TokenService;
-import com.modsen.сontroller.model.UserRequest;
-import com.modsen.сontroller.model.UserResponse;
 import com.modsen.exception.ValidationException;
 import com.modsen.repository.UserRepository;
 import com.modsen.service.EmailValidatorService;
 import com.modsen.service.LoginValidatorService;
+import com.modsen.service.TokenService;
 import com.modsen.service.UserService;
 import com.modsen.service.UserServiceImpl;
 import com.modsen.service.Validator;
+import com.modsen.сontroller.model.UserRequest;
+import com.modsen.сontroller.model.UserResponse;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.log4j.Log4j;
@@ -30,7 +30,6 @@ import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
-import java.util.function.Function;
 
 @WebServlet(name = "MainServlet", value = "/*")
 @Log4j
@@ -41,8 +40,6 @@ public class MainServlet extends HttpServlet {
     private HikariDataSource hikariDataSource;
     private UserRepository userRepository;
     private static final String FILE_PROPERTY = "config/dataBaseConfig.properties";
-    private final Function<UserRequest, String> functionGetEmailUserRequest = UserRequest::getEmail;
-    private final Function<UserRequest, String> functionGetLoginUserRequest = UserRequest::getLogin;
     private TokenService tokenService;
     private DataSource dataSource;
 
@@ -92,8 +89,8 @@ public class MainServlet extends HttpServlet {
 
     @Override
     public void init() {
-        EmailValidatorService<UserRequest> emailValidator = new EmailValidatorService(functionGetEmailUserRequest);
-        LoginValidatorService<UserRequest> loginValidator = new LoginValidatorService(functionGetLoginUserRequest);
+        EmailValidatorService<UserRequest> emailValidator = new EmailValidatorService<>(UserRequest::getEmail);
+        LoginValidatorService<UserRequest> loginValidator = new LoginValidatorService<>(UserRequest::getLogin);
         validators = List.of(emailValidator, loginValidator);
 
         Properties properties = new Properties();
