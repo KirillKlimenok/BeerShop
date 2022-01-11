@@ -2,20 +2,16 @@ package com.modsen.service;
 
 import com.modsen.exception.TooMuchValueCountTransactionException;
 import com.modsen.exception.TooSmallValueCountTransactionException;
+import lombok.AllArgsConstructor;
 
 import java.util.Properties;
 import java.util.function.Function;
 
+@AllArgsConstructor
 public class CountTransactionValidatorService<T> implements Validator<T> {
-    private int min;
-    private int max;
     private Function function;
-
-    public CountTransactionValidatorService(Function function, int max, int min) {
-        this.function = function;
-        this.min = min;
-        this.max = max;
-    }
+    private int max;
+    private int min;
 
     @Override
     public void check(T user) {
