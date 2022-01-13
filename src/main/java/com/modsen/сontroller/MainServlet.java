@@ -8,8 +8,11 @@ import com.modsen.exception.TransactionException;
 import com.modsen.exception.TransactionNotFoundException;
 import com.modsen.exception.UserNotFoundException;
 import com.modsen.exception.UserRegistrationException;
+import com.modsen.exception.ValidationException;
+import com.modsen.exception.WrongDataException;
 import com.modsen.repository.BeerRepository;
 import com.modsen.repository.TransactionRepository;
+import com.modsen.repository.UserActionRepository;
 import com.modsen.repository.UserRepository;
 import com.modsen.service.*;
 import com.modsen.сontroller.model.BeerRequest;
@@ -52,6 +55,7 @@ public class MainServlet extends HttpServlet {
     private BeerRepository beerRepository;
     private TransactionRepository transactionRepository;
     private UserActionService userActionService;
+    private UserActionRepository userActionRepository;
     private DataSource dataSource;
     private DateTimeFormatter dateTimeFormatter;
     private static final String DATE_PATTERN = "dd-MM-yyyy HH:mm:ss";
@@ -74,7 +78,7 @@ public class MainServlet extends HttpServlet {
             }
         } catch (UserNotFoundException e) {
             response.sendError(401, e.getMessage());
-        } catch (BeerNotFoundException | TransactionNotFoundException e) {
+        } catch (BeerNotFoundException | TransactionNotFoundException | ValidationException | WrongDataException e) {
             response.sendError(400, e.getMessage());
         } catch (SQLException e) {
             log.error(e.getMessage());
@@ -106,7 +110,7 @@ public class MainServlet extends HttpServlet {
             response.sendError(400, e.getMessage());
         } catch (UserNotFoundException e) {
             response.sendError(401, e.getMessage());
-        } catch (BeerNotFoundException | TransactionException e) {
+        } catch (BeerNotFoundException | TransactionException | ValidationException e) {
             response.sendError(400, e.getMessage());
         }
     }
@@ -147,10 +151,12 @@ public class MainServlet extends HttpServlet {
         registrationAndAuthService = new RegistrationAndAuthServiceImpl(userRepository, userRequestValidators, tokenService);
         beerRepository = new BeerRepository(dataSource);
         transactionRepository = new TransactionRepository(dataSource);
+        userActionRepository = new UserActionRepository(dataSource);
         userActionService = UserActionServiceImpl.builder().
                 beerRepository(beerRepository).
                 userRepository(userRepository).
                 transactionRepository(transactionRepository).
+                userActionRepository(userActionRepository).
                 beerValidators(beerValidators).
                 transactionsValidator(transactionsValidators).
                 dateTimeFormatter(dateTimeFormatter).

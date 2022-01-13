@@ -24,6 +24,7 @@ public class SingUpUserDoPostServiceImpl implements UserDoPostService {
         UserRequest user = objectMapper.readValue(bodyRequest, UserRequest.class);
         registrationAndAuthService.createNewUser(user);
         response.setStatus(200);
+
         PrintWriter printWriter = response.getWriter();
         printWriter.write("done");
         printWriter.close();

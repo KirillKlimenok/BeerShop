@@ -10,6 +10,7 @@ import com.modsen.exception.UserNotFoundException;
 import com.modsen.exception.WrongDataException;
 import com.modsen.repository.BeerRepository;
 import com.modsen.repository.TransactionRepository;
+import com.modsen.repository.UserActionRepository;
 import com.modsen.repository.UserRepository;
 import com.modsen.repository.entytie.Beer;
 import com.modsen.repository.entytie.BeerContainer;
@@ -40,6 +41,7 @@ public class UserActionServiceImpl implements UserActionService {
     private BeerRepository beerRepository;
     private UserRepository userRepository;
     private TransactionRepository transactionRepository;
+    private UserActionRepository userActionRepository;
     private List<Validator<BeerRequest>> beerValidators;
     private List<Validator<Transaction>> transactionsValidator;
     private DateTimeFormatter dateTimeFormatter;
@@ -53,13 +55,18 @@ public class UserActionServiceImpl implements UserActionService {
 
         listBeersRequest.forEach(beer -> beerValidators.forEach(validator -> validator.check(beer)));
 
-        List<Integer> beerRequestId = listBeersRequest.stream().
+        List<Integer> beerRequestId = listBeersRequest.
+                stream().
                 map(BeerRequest::getIdBeer).
                 collect(Collectors.toList());
+
         List<Beer> beersInBd = beerRepository.getBeerByIds(beerRequestId);
-        List<Integer> idsBeerFormBdResponse = beersInBd.stream().
+
+        List<Integer> idsBeerFormBdResponse = beersInBd.
+                stream().
                 map(Beer::getId).
                 collect(Collectors.toList());
+
         List<BeerRequest> newBeerCountInDb = new ArrayList<>();
 
         if (beersInBd.isEmpty()) {
@@ -77,23 +84,38 @@ public class UserActionServiceImpl implements UserActionService {
         List<TransactionDto> transactionDtoList = new ArrayList<>();
         for (BeerRequest beerRequest : listBeersRequest) {
             int idBeer = beerRequest.getIdBeer();
-            double countBeer = objectMapper.readTree(beerRequest.getCountJson()).get("count").asDouble();
+            double countBeer = objectMapper.
+                    readTree(beerRequest.getCountJson()).
+                    get("count").
+                    asDouble();
+
             TransactionDto transaction = new TransactionDto(idBeer, countBeer, date);
             transactionDtoList.add(transaction);
         }
 
-        beerRepository.updateCountBeer(newBeerCountInDb);
-        transactionRepository.save(transactionDtoList, userToken);
-
+        userActionRepository.updateCountBeerAndSaveTransactions(newBeerCountInDb, transactionDtoList, userToken);
     }
 
     private void checkBeerRequest(List<Beer> beersInBd, List<BeerRequest> listBeersRequest) throws SQLException, JsonProcessingException {
         Map<Integer, BeerContainer> beerContainerList = beerRepository.getBeerContainers();
 
         for (BeerRequest beerRequest : listBeersRequest) {
-            String countRequestBeer = objectMapper.readTree(beerRequest.getCountJson()).get("count").asText();
-            int idContainer = beersInBd.stream().filter(x -> x.getId() == beerRequest.getIdBeer()).findFirst().get().getIdContainer();
-            String nameContainer = beerContainerList.get(idContainer).getName();
+            String countRequestBeer = objectMapper.
+                    readTree(beerRequest.getCountJson()).
+                    get("count").
+                    asText();
+
+            int idContainerBeerInBd = beersInBd.
+                    stream().
+                    filter(x -> x.getId() == beerRequest.getIdBeer()).
+                    findFirst().
+                    get().
+                    getIdContainer();
+
+            String nameContainer = beerContainerList.
+                    get(idContainerBeerInBd).
+                    getName();
+
             if (!nameContainer.equalsIgnoreCase("разливное")) {
                 try {
                     Integer.parseInt(countRequestBeer);

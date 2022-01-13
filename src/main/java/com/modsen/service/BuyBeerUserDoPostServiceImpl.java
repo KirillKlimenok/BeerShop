@@ -29,6 +29,7 @@ public class BuyBeerUserDoPostServiceImpl implements UserDoPostService {
         String token = request.getHeader(nameHeaderToken);
         List<BeerRequest> buysBeer = List.of(objectMapper.readValue(bodyRequest, BeerRequest[].class));
         userActionService.buyBeer(buysBeer, token);
+
         response.setStatus(200);
         PrintWriter printWriter = response.getWriter();
         printWriter.write("Done");

@@ -66,6 +66,7 @@ public class UserRepository {
             return list;
         }
     }
+
     public boolean isUserExist(UUID token) throws SQLException {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(SQL_SCRIPT_FOR_FIND_USER_BY_ID)) {

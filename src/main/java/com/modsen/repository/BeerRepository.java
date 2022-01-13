@@ -1,13 +1,10 @@
 package com.modsen.repository;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.modsen.repository.entytie.Beer;
 import com.modsen.repository.entytie.BeerContainer;
 import com.modsen.repository.entytie.BeerType;
 import com.modsen.service.dto.BeerDto;
-import com.modsen.сontroller.model.BeerRequest;
 import lombok.AllArgsConstructor;
-import org.postgresql.util.PGobject;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -23,7 +20,6 @@ import java.util.Map;
 @AllArgsConstructor
 public class BeerRepository {
     private static final String SQL_SCRIPT_FOR_CREATE_NEW_BEER = "insert into beers (name, id_container, id_beer_type, alcohol_content, ibu, count_containers) values (?,?,?,?,?,?);";
-    private static final String SQL_SCRIPT_FOR_CHANGE_BEER_COUNT_BEER = "update beers set count_containers = ? where id = ?;";
     private static final String SQL_SCRIPT_FOR_GET_ALL_BEERS_WITH_LIMIT = "select * from beers limit ?";
     private static final String SQL_SCRIPT_FOR_GET_ALL_BEER_CONTAINERS = "select * from  beer_containers";
     private static final String SQL_SCRIPT_FOR_GET_ALL_BEER_TYPES = "select * from  beer_types";
@@ -58,26 +54,6 @@ public class BeerRepository {
             }
 
             return getBeersList(preparedStatement);
-        }
-    }
-
-    public void updateCountBeer(List<BeerRequest> beerRequests) throws SQLException {
-        String scriptWithAllBeerWhoChange = SQL_SCRIPT_FOR_CHANGE_BEER_COUNT_BEER;
-        scriptWithAllBeerWhoChange += SQL_SCRIPT_FOR_CHANGE_BEER_COUNT_BEER.repeat(beerRequests.size() - 1);
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(scriptWithAllBeerWhoChange)) {
-            int j = 1;
-            PGobject jsonObject = new PGobject();
-            jsonObject.setType("json");
-            for (int i = 1; i <= beerRequests.size(); i++) {
-                jsonObject.setValue(beerRequests.get(i - 1).getCountJson());
-                preparedStatement.setObject(j, jsonObject);
-                preparedStatement.setInt(j + 1, beerRequests.get(i - 1).getIdBeer());
-                j = j + 2;
-            }
-            preparedStatement.execute();
-            connection.commit();
         }
     }
 
