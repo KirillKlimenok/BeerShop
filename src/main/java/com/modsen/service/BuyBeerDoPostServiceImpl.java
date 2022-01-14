@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.modsen.exception.BeerNotFoundException;
 import com.modsen.exception.TransactionException;
 import com.modsen.exception.UserNotFoundException;
-import com.modsen.exception.UserRegistrationException;
 import com.modsen.сontroller.model.BeerRequest;
 import lombok.Builder;
 
@@ -16,7 +15,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 @Builder
-public class BuyBeerUserDoPostServiceImpl implements UserDoPostService {
+public class BuyBeerDoPostServiceImpl implements DoPostService {
     private static final String URL_REQUEST = "/beerShop/user/buy-beer";
 
     private UserActionService userActionService;

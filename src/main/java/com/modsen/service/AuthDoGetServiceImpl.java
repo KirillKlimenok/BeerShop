@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 @Builder
-public class AuthDoGetServiceImpl implements UserDoGetService {
+public class AuthDoGetServiceImpl implements DoGetService {
     private static final String URL_REQUEST = "/beerShop/auth";
 
     private ObjectMapper objectMapper;

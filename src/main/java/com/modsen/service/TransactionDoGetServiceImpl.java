@@ -13,7 +13,7 @@ import java.io.PrintWriter;
 import java.sql.SQLException;
 
 @Builder
-public class TransactionUserDoGetServiceImpl implements UserDoGetService {
+public class TransactionDoGetServiceImpl implements DoGetService {
     private static final String URL_REQUEST = "/beerShop/user/get-user-transactions";
     private UserActionService userActionService;
     private ObjectMapper objectMapper;

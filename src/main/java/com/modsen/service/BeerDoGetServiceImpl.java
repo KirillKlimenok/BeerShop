@@ -14,7 +14,7 @@ import java.io.PrintWriter;
 import java.sql.SQLException;
 
 @Builder
-public class BeerUserDoGetServiceImpl implements UserDoGetService {
+public class BeerDoGetServiceImpl implements DoGetService {
     private static final String URL_REQUEST = "/beerShop/user/get-beer-list";
     private UserActionService userActionService;
     private ObjectMapper objectMapper;

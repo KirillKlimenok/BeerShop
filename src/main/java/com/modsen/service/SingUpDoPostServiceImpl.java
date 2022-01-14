@@ -12,7 +12,7 @@ import java.io.PrintWriter;
 import java.sql.SQLException;
 
 @Builder
-public class SingUpUserDoPostServiceImpl implements UserDoPostService {
+public class SingUpDoPostServiceImpl implements DoPostService {
     private static final String URL_REQUEST = "/beerShop/signup";
 
     private RegistrationAndAuthService registrationAndAuthService;

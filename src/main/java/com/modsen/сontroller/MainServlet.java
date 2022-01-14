@@ -2,6 +2,7 @@ package com.modsen.сontroller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.modsen.exception.AccessException;
 import com.modsen.exception.BeerNotFoundException;
 import com.modsen.exception.PropertyNotFoundException;
 import com.modsen.exception.TransactionException;
@@ -42,8 +43,8 @@ public class MainServlet extends HttpServlet {
     private List<Validator<UserRequest>> userRequestValidators;
     private List<Validator<BeerRequest>> beerValidators;
     private List<Validator<Transaction>> transactionsValidators;
-    private List<UserDoGetService> doGetServices;
-    private List<UserDoPostService> doPostServices;
+    private List<DoGetService> doGetServices;
+    private List<DoPostService> doPostServices;
     private HikariDataSource hikariDataSource;
     private UserRepository userRepository;
     private static final String FILE_PROPERTY_DATABASE_CONFIG = "config/dataBaseConfig.properties";
@@ -64,8 +65,8 @@ public class MainServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
             String url = request.getRequestURI();
-            UserDoGetService userDoGetService = null;
-            for (UserDoGetService doGetService : doGetServices) {
+            DoGetService userDoGetService = null;
+            for (DoGetService doGetService : doGetServices) {
                 if (doGetService.getUrl().equals(url)) {
                     userDoGetService = doGetService;
                     break;
@@ -90,17 +91,17 @@ public class MainServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
             String url = request.getRequestURI();
-            UserDoPostService userDoPostService = null;
-            for (UserDoPostService doGetService : doPostServices) {
+            DoPostService doPostService = null;
+            for (DoPostService doGetService : doPostServices) {
                 if (doGetService.getUrl().equals(url)) {
-                    userDoPostService = doGetService;
+                    doPostService = doGetService;
                     break;
                 }
             }
-            if (userDoPostService == null) {
+            if (doPostService == null) {
                 response.sendError(404);
             } else {
-                userDoPostService.apply(request, response, getBodyReq(request));
+                doPostService.apply(request, response, getBodyReq(request));
             }
         } catch (JsonProcessingException | SQLException e) {
             log.error(e.getMessage());
@@ -108,7 +109,7 @@ public class MainServlet extends HttpServlet {
         } catch (UserRegistrationException e) {
             log.warn(e.getMessage());
             response.sendError(400, e.getMessage());
-        } catch (UserNotFoundException e) {
+        } catch (UserNotFoundException | AccessException e) {
             response.sendError(401, e.getMessage());
         } catch (BeerNotFoundException | TransactionException | ValidationException e) {
             response.sendError(400, e.getMessage());
@@ -163,7 +164,7 @@ public class MainServlet extends HttpServlet {
                 objectMapper(objectMapper).
                 build();
 
-        BeerUserDoGetServiceImpl beerUserDoGetService = BeerUserDoGetServiceImpl.
+        BeerDoGetServiceImpl beerUserDoGetService = BeerDoGetServiceImpl.
                 builder().
                 userActionService(userActionService).
                 objectMapper(objectMapper).
@@ -177,20 +178,20 @@ public class MainServlet extends HttpServlet {
                 nameHeaderToken(NAME_ACCESS_TOKEN).
                 build();
 
-        TransactionUserDoGetServiceImpl transactionUserDoGetService = TransactionUserDoGetServiceImpl.
+        TransactionDoGetServiceImpl transactionUserDoGetService = TransactionDoGetServiceImpl.
                 builder().
                 userActionService(userActionService).
                 objectMapper(objectMapper).
                 nameHeaderToken(NAME_ACCESS_TOKEN).
                 build();
 
-        SingUpUserDoPostServiceImpl singUpUserDoPostService = SingUpUserDoPostServiceImpl.
+        SingUpDoPostServiceImpl singUpUserDoPostService = SingUpDoPostServiceImpl.
                 builder().
                 registrationAndAuthService(registrationAndAuthService).
                 objectMapper(objectMapper).
                 build();
 
-        BuyBeerUserDoPostServiceImpl buyBeerUserDoPostService = BuyBeerUserDoPostServiceImpl.
+        BuyBeerDoPostServiceImpl buyBeerUserDoPostService = BuyBeerDoPostServiceImpl.
                 builder().
                 userActionService(userActionService).
                 objectMapper(objectMapper).
