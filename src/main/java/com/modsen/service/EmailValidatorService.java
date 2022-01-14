@@ -14,8 +14,8 @@ public class EmailValidatorService<T> implements Validator<T> {
     }
 
     @Override
-    public void check(T user) {
-        String email = function.apply(user);
+    public void check(T obj) {
+        String email = function.apply(obj);
         if (!Pattern.matches(REGEX_FOR_EMAIL, email)) {
             throw new ValidationException("Wrong email. please write email for example name@any.damain");
         }

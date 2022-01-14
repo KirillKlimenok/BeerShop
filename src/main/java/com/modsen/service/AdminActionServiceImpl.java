@@ -2,6 +2,7 @@ package com.modsen.service;
 
 import com.modsen.exception.AccessException;
 import com.modsen.repository.AdminRepository;
+import com.modsen.сontroller.model.BeerResponse;
 import lombok.AllArgsConstructor;
 
 import java.sql.SQLException;
@@ -12,7 +13,7 @@ public class AdminActionServiceImpl implements AdminActionService {
     private AdminRepository adminRepository;
 
     @Override
-    public void addNewPosition() {
+    public void addNewPosition(BeerResponse beerResponse) {
 
     }
 

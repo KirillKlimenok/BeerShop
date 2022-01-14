@@ -6,10 +6,9 @@ import com.modsen.exception.BeerNotFoundException;
 import com.modsen.exception.TransactionException;
 import com.modsen.exception.UserNotFoundException;
 import com.modsen.exception.UserRegistrationException;
-import com.modsen.repository.entytie.Beer;
-import com.modsen.service.dto.BeerDto;
 import com.modsen.сontroller.model.BeerResponse;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -18,9 +17,10 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 
+@Builder
 @AllArgsConstructor
 public class AddNewBeerPositionDoPostServiceImpl implements DoPostService {
-    public static final String URL_REQUEST = "/beerShop/admin/buy-beer";
+    public static final String URL_REQUEST = "/beerShop/admin/new-position";
 
     private AdminActionService adminActionService;
     private ObjectMapper objectMapper;
@@ -36,8 +36,7 @@ public class AddNewBeerPositionDoPostServiceImpl implements DoPostService {
         BeerResponse beerResponse = objectMapper.readValue(bodyRequest, BeerResponse.class);
 
         validators.forEach(x -> x.check(beerResponse));
-
-        adminActionService.addNewPosition();
+        adminActionService.addNewPosition(beerResponse);
     }
 
     @Override

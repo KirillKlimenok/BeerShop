@@ -16,12 +16,12 @@ public class CountValidatorService<T> implements Validator<T> {
     private int min;
 
     @Override
-    public void check(T user) {
-        int value = functionGetCount.apply(user);
+    public void check(T obj) {
+        int value = functionGetCount.apply(obj);
         if (value < min) {
-            setMinValue.accept(user);
+            setMinValue.accept(obj);
         } else if (value > max) {
-            setMaxValue.accept(user);
+            setMaxValue.accept(obj);
         }
     }
 }

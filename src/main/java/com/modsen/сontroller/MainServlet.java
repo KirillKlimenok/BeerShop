@@ -11,14 +11,17 @@ import com.modsen.exception.UserNotFoundException;
 import com.modsen.exception.UserRegistrationException;
 import com.modsen.exception.ValidationException;
 import com.modsen.exception.WrongDataException;
+import com.modsen.repository.AdminRepository;
 import com.modsen.repository.BeerRepository;
 import com.modsen.repository.TransactionRepository;
 import com.modsen.repository.UserActionRepository;
 import com.modsen.repository.UserRepository;
 import com.modsen.service.*;
 import com.modsen.сontroller.model.BeerRequest;
+import com.modsen.сontroller.model.BeerResponse;
 import com.modsen.сontroller.model.Transaction;
 import com.modsen.сontroller.model.UserRequest;
+import com.modsen.сontroller.model.UserResponse;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.log4j.Log4j2;
@@ -43,6 +46,7 @@ public class MainServlet extends HttpServlet {
     private List<Validator<UserRequest>> userRequestValidators;
     private List<Validator<BeerRequest>> beerValidators;
     private List<Validator<Transaction>> transactionsValidators;
+    private List<Validator<BeerResponse>> beerResponseValidators;
     private List<DoGetService> doGetServices;
     private List<DoPostService> doPostServices;
     private HikariDataSource hikariDataSource;
@@ -51,12 +55,16 @@ public class MainServlet extends HttpServlet {
     private static final String FILE_PROPERTY_CONFIG = "config/config.properties";
     public static final String NAME_PROPERTY_WITH_MIN_COUNT_TRANSACTION = "minCountTransactionOnPage";
     public static final String NAME_PROPERTY_WITH_MAX_COUNT_TRANSACTION = "maxCountTransactionOnPage";
+    public static final String NAME_PROPERTY_WITH_MAX_ALCOHOL_CONTENT = "beer.maxPercentageAlcoholContent";
+    public static final String NAME_PROPERTY_WITH_MIN_ALCOHOL_CONTENT = "beer.minPercentageAlcoholContent";
     public static final String NAME_ACCESS_TOKEN = "App-Auth";
     private TokenService tokenService;
     private BeerRepository beerRepository;
     private TransactionRepository transactionRepository;
     private UserActionService userActionService;
     private UserActionRepository userActionRepository;
+    private AdminActionService adminActionService;
+    private AdminRepository adminRepository;
     private DataSource dataSource;
     private DateTimeFormatter dateTimeFormatter;
     private static final String DATE_PATTERN = "dd-MM-yyyy HH:mm:ss";
@@ -125,6 +133,8 @@ public class MainServlet extends HttpServlet {
 
         int maxCountObjectsOnPage = Integer.parseInt(configProperty.getProperty(NAME_PROPERTY_WITH_MAX_COUNT_TRANSACTION).trim());
         int minCountObjectsOnPage = Integer.parseInt(configProperty.getProperty(NAME_PROPERTY_WITH_MIN_COUNT_TRANSACTION).trim());
+        float minBeerAlcoholContent = Float.parseFloat(configProperty.getProperty(NAME_PROPERTY_WITH_MAX_ALCOHOL_CONTENT).trim());
+        float maxBeerAlcoholContent = Float.parseFloat(configProperty.getProperty(NAME_PROPERTY_WITH_MIN_ALCOHOL_CONTENT).trim());
 
         CountValidatorService<Transaction> countValidatorService = CountValidatorService.<Transaction>builder().
                 functionGetCount(Transaction::getCountTransaction).
@@ -135,9 +145,11 @@ public class MainServlet extends HttpServlet {
                 build();
         EmailValidatorService<UserRequest> emailValidator = new EmailValidatorService<>(UserRequest::getEmail);
         LoginValidatorService<UserRequest> loginValidator = new LoginValidatorService<>(UserRequest::getLogin);
+        BeerAlcoholValidatorImpl<BeerResponse> alcoholValidator = new BeerAlcoholValidatorImpl<>(BeerResponse::getAlcoholContent, minBeerAlcoholContent, maxBeerAlcoholContent);
         transactionsValidators = List.of(countValidatorService);
         userRequestValidators = List.of(emailValidator, loginValidator);
         beerValidators = List.of();
+        beerResponseValidators = List.of(alcoholValidator);
 
         HikariConfig hikariConfig = new HikariConfig(dataBaseProperty);
         hikariConfig.setAutoCommit(false);
@@ -153,6 +165,7 @@ public class MainServlet extends HttpServlet {
         beerRepository = new BeerRepository(dataSource);
         transactionRepository = new TransactionRepository(dataSource);
         userActionRepository = new UserActionRepository(dataSource);
+        adminRepository = new AdminRepository(dataSource);
         userActionService = UserActionServiceImpl.builder().
                 beerRepository(beerRepository).
                 userRepository(userRepository).
@@ -163,6 +176,7 @@ public class MainServlet extends HttpServlet {
                 dateTimeFormatter(dateTimeFormatter).
                 objectMapper(objectMapper).
                 build();
+        adminActionService = new AdminActionServiceImpl(adminRepository);
 
         BeerDoGetServiceImpl beerUserDoGetService = BeerDoGetServiceImpl.
                 builder().
@@ -198,8 +212,16 @@ public class MainServlet extends HttpServlet {
                 nameHeaderToken(NAME_ACCESS_TOKEN).
                 build();
 
+        AddNewBeerPositionDoPostServiceImpl addNewBeerPositionDoPostService = AddNewBeerPositionDoPostServiceImpl.
+                builder().
+                adminActionService(adminActionService).
+                objectMapper(objectMapper).
+                nameHeaderToken(NAME_ACCESS_TOKEN).
+                validators(beerResponseValidators).
+                build();
+
         doGetServices = List.of(beerUserDoGetService, authDoGetService, transactionUserDoGetService);
-        doPostServices = List.of(singUpUserDoPostService, buyBeerUserDoPostService);
+        doPostServices = List.of(singUpUserDoPostService, buyBeerUserDoPostService, addNewBeerPositionDoPostService);
     }
 
     @Override

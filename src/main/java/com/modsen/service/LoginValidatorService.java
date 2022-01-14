@@ -14,8 +14,8 @@ public class LoginValidatorService<T> implements Validator<T> {
     }
 
     @Override
-    public void check(T user) {
-        String email = function.apply(user);
+    public void check(T obj) {
+        String email = function.apply(obj);
         if(!Pattern.matches(REGEX_FOR_LOGIN, email)){
             throw new ValidationException("Wrong login. please write login without numbers and use only latin letters");
         }
