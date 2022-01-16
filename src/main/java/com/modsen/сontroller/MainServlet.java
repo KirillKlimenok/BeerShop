@@ -2,15 +2,7 @@ package com.modsen.сontroller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.modsen.exception.AccessException;
-import com.modsen.exception.BeerNotFoundException;
-import com.modsen.exception.PropertyNotFoundException;
-import com.modsen.exception.TransactionException;
-import com.modsen.exception.TransactionNotFoundException;
-import com.modsen.exception.UserNotFoundException;
-import com.modsen.exception.UserRegistrationException;
-import com.modsen.exception.ValidationException;
-import com.modsen.exception.WrongDataException;
+import com.modsen.exception.*;
 import com.modsen.repository.AdminRepository;
 import com.modsen.repository.BeerRepository;
 import com.modsen.repository.TransactionRepository;
@@ -21,7 +13,6 @@ import com.modsen.сontroller.model.BeerRequest;
 import com.modsen.сontroller.model.BeerResponse;
 import com.modsen.сontroller.model.Transaction;
 import com.modsen.сontroller.model.UserRequest;
-import com.modsen.сontroller.model.UserResponse;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.log4j.Log4j2;
@@ -114,7 +105,7 @@ public class MainServlet extends HttpServlet {
         } catch (JsonProcessingException | SQLException e) {
             log.error(e.getMessage());
             response.sendError(500, "please try again" + e.getMessage());
-        } catch (UserRegistrationException e) {
+        } catch (UserRegistrationException | BeerParameterNotExistException e) {
             log.warn(e.getMessage());
             response.sendError(400, e.getMessage());
         } catch (UserNotFoundException | AccessException e) {
@@ -176,7 +167,7 @@ public class MainServlet extends HttpServlet {
                 dateTimeFormatter(dateTimeFormatter).
                 objectMapper(objectMapper).
                 build();
-        adminActionService = new AdminActionServiceImpl(adminRepository);
+        adminActionService = new AdminActionServiceImpl(adminRepository, beerRepository);
 
         BeerDoGetServiceImpl beerUserDoGetService = BeerDoGetServiceImpl.
                 builder().

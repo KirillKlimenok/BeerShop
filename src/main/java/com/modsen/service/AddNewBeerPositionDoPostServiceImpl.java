@@ -3,6 +3,7 @@ package com.modsen.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.modsen.exception.AccessException;
 import com.modsen.exception.BeerNotFoundException;
+import com.modsen.exception.BeerParameterNotExistException;
 import com.modsen.exception.TransactionException;
 import com.modsen.exception.UserNotFoundException;
 import com.modsen.exception.UserRegistrationException;
@@ -28,7 +29,7 @@ public class AddNewBeerPositionDoPostServiceImpl implements DoPostService {
     private List<Validator<BeerResponse>> validators;
 
     @Override
-    public void apply(HttpServletRequest request, HttpServletResponse response, String bodyRequest) throws IOException, SQLException, UserRegistrationException, UserNotFoundException, BeerNotFoundException, TransactionException, AccessException {
+    public void apply(HttpServletRequest request, HttpServletResponse response, String bodyRequest) throws IOException, SQLException, UserRegistrationException, UserNotFoundException, BeerNotFoundException, TransactionException, AccessException, BeerParameterNotExistException {
         String token = request.getHeader(nameHeaderToken);
 
         adminActionService.checkIsAdmin(UUID.fromString(token));
@@ -36,6 +37,7 @@ public class AddNewBeerPositionDoPostServiceImpl implements DoPostService {
         BeerResponse beerResponse = objectMapper.readValue(bodyRequest, BeerResponse.class);
 
         validators.forEach(x -> x.check(beerResponse));
+
         adminActionService.addNewPosition(beerResponse);
     }
 

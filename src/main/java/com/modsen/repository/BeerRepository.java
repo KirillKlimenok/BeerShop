@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @AllArgsConstructor
 public class BeerRepository {
@@ -25,6 +26,8 @@ public class BeerRepository {
     private static final String SQL_SCRIPT_FOR_GET_ALL_BEER_TYPES = "select * from  beer_types";
     private static final String SQL_SCRIPT_FOR_GET_BEER_BY_ID_WITH_COUNT = "select id, name, id_container, id_beer_type, alcohol_content, ibu, count_containers from  beers where id = ?";
     private static final String SQL_FOR_ADD_NEW_BEER_ID = "or id =?";
+    private static final String SQL_FOR_GET_BEER_TYPE_ID_BY_NAME = "select * from beer_types where type_name = ?";
+    private static final String SQL_FOR_GET_BEER_CONTAINER_ID_BY_NAME_AND_VOLUME = "select * from beer_types where type_name = ?";
 
     private final DataSource dataSource;
 
@@ -116,6 +119,46 @@ public class BeerRepository {
             }
 
             return beerTypes;
+        }
+    }
+
+    public boolean isBeerTypeExist(String name) throws SQLException {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(SQL_FOR_GET_BEER_TYPE_ID_BY_NAME)) {
+            statement.setString(1, name);
+            ResultSet resultSet = statement.executeQuery();
+            return resultSet.next();
+        }
+    }
+
+    public int getBeerTypeId(String name) throws SQLException {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(SQL_FOR_GET_BEER_TYPE_ID_BY_NAME)) {
+            statement.setString(1, name);
+            ResultSet resultSet = statement.executeQuery();
+            resultSet.next();
+            return resultSet.getInt("id");
+        }
+    }
+
+    public boolean isBeerContainerExist(String name, float volume) throws SQLException {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(SQL_FOR_GET_BEER_CONTAINER_ID_BY_NAME_AND_VOLUME)) {
+            statement.setString(1, name);
+            statement.setFloat(2, volume);
+            ResultSet resultSet = statement.executeQuery();
+            return resultSet.next();
+        }
+    }
+
+    public int getBeerContainerId(String name, float volume) throws SQLException {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(SQL_FOR_GET_BEER_CONTAINER_ID_BY_NAME_AND_VOLUME)) {
+            statement.setString(1, name);
+            statement.setFloat(2, volume);
+            ResultSet resultSet = statement.executeQuery();
+            resultSet.next();
+            return resultSet.getInt("id");
         }
     }
 }
