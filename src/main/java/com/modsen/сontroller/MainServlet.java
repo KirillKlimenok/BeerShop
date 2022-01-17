@@ -160,6 +160,7 @@ public class MainServlet extends HttpServlet {
     public void init() {
         Properties dataBaseProperty = new Properties();
         Properties configProperty = new Properties();
+        objectMapper = new ObjectMapper();
         loadProperties(dataBaseProperty, FILE_PROPERTY_DATABASE_CONFIG);
         loadProperties(configProperty, FILE_PROPERTY_CONFIG);
 
@@ -204,9 +205,16 @@ public class MainServlet extends HttpServlet {
         BeerTextFieldValidatorService<BeerResponse> nameValidator = new BeerTextFieldValidatorService<>(BeerResponse::getName, "name");
         BeerTextFieldValidatorService<BeerResponse> beerTypeValidator = new BeerTextFieldValidatorService<>(BeerResponse::getBeerType, "type");
 
+        BeerCountValidatorService<BeerRequest> beerRequestBeerCountValidatorService = BeerCountValidatorService.
+                <BeerRequest>builder().
+                getCount(BeerRequest::getCountJson).
+                parameter("count").
+                objectMapper(objectMapper).
+                build();
+
         transactionsValidators = List.of(countValidatorService);
         userRequestValidators = List.of(emailValidator, loginValidator);
-        beerValidators = List.of();
+        beerValidators = List.of(beerRequestBeerCountValidatorService);
         beerResponseValidators = List.of(alcoholValidator, volumeAndContainerValidator, ibuValidator, nameValidator, beerTypeValidator);
 
         HikariConfig hikariConfig = new HikariConfig(dataBaseProperty);
@@ -216,7 +224,6 @@ public class MainServlet extends HttpServlet {
 
         dataSource = hikariDataSource;
         dateTimeFormatter = DateTimeFormatter.ofPattern(DATE_PATTERN);
-        objectMapper = new ObjectMapper();
         tokenService = new TokenService();
         userRepository = new UserRepository(dataSource);
         registrationAndAuthService = new RegistrationAndAuthServiceImpl(userRepository, userRequestValidators, tokenService);

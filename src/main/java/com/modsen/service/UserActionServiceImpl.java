@@ -141,7 +141,7 @@ public class UserActionServiceImpl implements UserActionService {
             }
             Beer beerInDb = beersInBd.stream().filter(x -> x.getId() == beerId).collect(Collectors.toList()).get(0);
             double currentCountBeer = getValueCountFromJson(beerInDb.getCount());
-            if (countById >= currentCountBeer) {
+            if (countById > currentCountBeer) {
                 throw new TransactionException("Do you want to buy beer id: " + beerId + " quantity " + countById + "?. Is there in stock: " + currentCountBeer + " such beer. Please correct the amount of beer you have selected or change the position");
             }
             String currentCountBeerJson = "{\"count\":" + (currentCountBeer - countById) + "}";

@@ -20,7 +20,7 @@ public class BeerCountValidatorService<T> implements Validator<T> {
         try {
             JsonNode jsonNode = objectMapper.readTree(getCount.apply(obj));
             int count = jsonNode.get(parameter).asInt();
-            if (count < 0) {
+            if (count <= 0) {
                 throw new BeerValidationException("you entered vary small count");
             }
         } catch (JsonProcessingException e) {
