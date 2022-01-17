@@ -14,6 +14,11 @@ public class BeerAlcoholValidatorImpl<T> implements Validator<T> {
     @Override
     public void check(T obj) {
         float objAlcoholContent = functionGetAlcoholContent.apply(obj);
+
+        if (objAlcoholContent == 0) {
+            throw new BeerValidationException("You don't entered alcohol content");
+        }
+
         if (objAlcoholContent <= minValue) {
             throw new BeerValidationException("You entered vary small alcohol content");
         } else if (objAlcoholContent >= maxValue) {

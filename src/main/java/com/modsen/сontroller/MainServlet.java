@@ -8,6 +8,7 @@ import com.modsen.repository.BeerRepository;
 import com.modsen.repository.TransactionRepository;
 import com.modsen.repository.UserActionRepository;
 import com.modsen.repository.UserRepository;
+import com.modsen.repository.entytie.Beer;
 import com.modsen.service.*;
 import com.modsen.сontroller.model.BeerRequest;
 import com.modsen.сontroller.model.BeerResponse;
@@ -26,6 +27,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -40,6 +42,7 @@ public class MainServlet extends HttpServlet {
     private List<Validator<BeerResponse>> beerResponseValidators;
     private List<DoGetService> doGetServices;
     private List<DoPostService> doPostServices;
+    private List<DoPutService> doPutServices;
     private HikariDataSource hikariDataSource;
     private UserRepository userRepository;
     private static final String FILE_PROPERTY_DATABASE_CONFIG = "config/dataBaseConfig.properties";
@@ -48,7 +51,12 @@ public class MainServlet extends HttpServlet {
     public static final String NAME_PROPERTY_WITH_MAX_COUNT_TRANSACTION = "maxCountTransactionOnPage";
     public static final String NAME_PROPERTY_WITH_MAX_ALCOHOL_CONTENT = "beer.maxPercentageAlcoholContent";
     public static final String NAME_PROPERTY_WITH_MIN_ALCOHOL_CONTENT = "beer.minPercentageAlcoholContent";
+    public static final String NAME_PROPERTY_WITH_MAX_VOLUME = "beer.maxContainerVolume";
+    public static final String NAME_PROPERTY_WITH_MIN_VOLUME = "beer.minContainerVolume";
+    public static final String NAME_PROPERTY_WITH_MAX_IBU = "beer.maxIbu";
+    public static final String NAME_PROPERTY_WITH_MIN_IBU = "beer.minIbu";
     public static final String NAME_ACCESS_TOKEN = "App-Auth";
+    private List<String> nameContainersWithoutConditions;
     private TokenService tokenService;
     private BeerRepository beerRepository;
     private TransactionRepository transactionRepository;
@@ -76,7 +84,7 @@ public class MainServlet extends HttpServlet {
             } else {
                 userDoGetService.apply(request, response, getBodyReq(request));
             }
-        } catch (UserNotFoundException e) {
+        } catch (UserNotFoundException | AccessException e) {
             response.sendError(401, e.getMessage());
         } catch (BeerNotFoundException | TransactionNotFoundException | ValidationException | WrongDataException e) {
             response.sendError(400, e.getMessage());
@@ -89,6 +97,7 @@ public class MainServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
+            request.setCharacterEncoding("utf-8");
             String url = request.getRequestURI();
             DoPostService doPostService = null;
             for (DoPostService doGetService : doPostServices) {
@@ -102,16 +111,48 @@ public class MainServlet extends HttpServlet {
             } else {
                 doPostService.apply(request, response, getBodyReq(request));
             }
-        } catch (JsonProcessingException | SQLException e) {
-            log.error(e.getMessage());
-            response.sendError(500, "please try again" + e.getMessage());
         } catch (UserRegistrationException | BeerParameterNotExistException e) {
+            response.setContentType("application/json;Windows-1251;charset=utf-8");
             log.warn(e.getMessage());
             response.sendError(400, e.getMessage());
         } catch (UserNotFoundException | AccessException e) {
             response.sendError(401, e.getMessage());
-        } catch (BeerNotFoundException | TransactionException | ValidationException e) {
+        } catch (BeerNotFoundException | TransactionException | ValidationException | DataAlreadyCreatedException e) {
             response.sendError(400, e.getMessage());
+        } catch (JsonProcessingException | SQLException e) {
+            log.error(e.getMessage());
+            response.sendError(500, "please try again");
+        }
+    }
+
+    @Override
+    protected void doPut(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        try {
+            request.setCharacterEncoding("utf-8");
+            String url = request.getRequestURI();
+            DoPutService doPostService = null;
+            for (DoPutService doPutService : doPutServices) {
+                if (doPutService.getUrl().equals(url)) {
+                    doPostService = doPutService;
+                    break;
+                }
+            }
+            if (doPostService == null) {
+                response.sendError(404);
+            } else {
+                doPostService.apply(request, response, getBodyReq(request));
+            }
+        } catch (BeerParameterNotExistException e) {
+            response.setContentType("application/json;Windows-1251;charset=utf-8");
+            log.warn(e.getMessage());
+            response.sendError(400, e.getMessage());
+        } catch (AccessException e) {
+            response.sendError(401, e.getMessage());
+        } catch (BeerNotFoundException | ValidationException e) {
+            response.sendError(400, e.getMessage());
+        } catch (JsonProcessingException | SQLException e) {
+            log.error(e.getMessage() + Arrays.toString(e.getStackTrace()));
+            response.sendError(500, Arrays.toString(e.getStackTrace()));
         }
     }
 
@@ -124,10 +165,17 @@ public class MainServlet extends HttpServlet {
 
         int maxCountObjectsOnPage = Integer.parseInt(configProperty.getProperty(NAME_PROPERTY_WITH_MAX_COUNT_TRANSACTION).trim());
         int minCountObjectsOnPage = Integer.parseInt(configProperty.getProperty(NAME_PROPERTY_WITH_MIN_COUNT_TRANSACTION).trim());
-        float minBeerAlcoholContent = Float.parseFloat(configProperty.getProperty(NAME_PROPERTY_WITH_MAX_ALCOHOL_CONTENT).trim());
-        float maxBeerAlcoholContent = Float.parseFloat(configProperty.getProperty(NAME_PROPERTY_WITH_MIN_ALCOHOL_CONTENT).trim());
+        float minBeerAlcoholContent = Float.parseFloat(configProperty.getProperty(NAME_PROPERTY_WITH_MIN_ALCOHOL_CONTENT).trim());
+        float maxBeerAlcoholContent = Float.parseFloat(configProperty.getProperty(NAME_PROPERTY_WITH_MAX_ALCOHOL_CONTENT).trim());
+        float minBeerVolume = Float.parseFloat(configProperty.getProperty(NAME_PROPERTY_WITH_MIN_VOLUME).trim());
+        float maxBeerVolume = Float.parseFloat(configProperty.getProperty(NAME_PROPERTY_WITH_MAX_VOLUME).trim());
+        int maxIbu = Integer.parseInt(configProperty.getProperty(NAME_PROPERTY_WITH_MAX_IBU).trim());
+        int minIbu = Integer.parseInt(configProperty.getProperty(NAME_PROPERTY_WITH_MIN_IBU).trim());
 
-        CountValidatorService<Transaction> countValidatorService = CountValidatorService.<Transaction>builder().
+        nameContainersWithoutConditions = List.of("разливное");
+
+        CountValidatorService<Transaction> countValidatorService = CountValidatorService.
+                <Transaction>builder().
                 functionGetCount(Transaction::getCountTransaction).
                 setMaxValue((obj) -> obj.setCountTransaction(maxCountObjectsOnPage)).
                 setMinValue((obj) -> obj.setCountTransaction(minCountObjectsOnPage)).
@@ -137,10 +185,29 @@ public class MainServlet extends HttpServlet {
         EmailValidatorService<UserRequest> emailValidator = new EmailValidatorService<>(UserRequest::getEmail);
         LoginValidatorService<UserRequest> loginValidator = new LoginValidatorService<>(UserRequest::getLogin);
         BeerAlcoholValidatorImpl<BeerResponse> alcoholValidator = new BeerAlcoholValidatorImpl<>(BeerResponse::getAlcoholContent, minBeerAlcoholContent, maxBeerAlcoholContent);
+        BeerVolumeValidatorService<BeerResponse> volumeAndContainerValidator = BeerVolumeValidatorService.
+                <BeerResponse>builder().
+                getType(BeerResponse::getContainer).
+                getVolume(BeerResponse::getVolume).
+                nameContainerBeerWithoutConditions(nameContainersWithoutConditions).
+                max(maxBeerVolume).
+                min(minBeerVolume)
+                .build();
+
+        BeerIbuValidatorService<BeerResponse> ibuValidator = BeerIbuValidatorService.
+                <BeerResponse>builder().
+                getIbu(BeerResponse::getIbu).
+                max(maxIbu).
+                min(minIbu).
+                build();
+
+        BeerTextFieldValidatorService<BeerResponse> nameValidator = new BeerTextFieldValidatorService<>(BeerResponse::getName, "name");
+        BeerTextFieldValidatorService<BeerResponse> beerTypeValidator = new BeerTextFieldValidatorService<>(BeerResponse::getBeerType, "type");
+
         transactionsValidators = List.of(countValidatorService);
         userRequestValidators = List.of(emailValidator, loginValidator);
         beerValidators = List.of();
-        beerResponseValidators = List.of(alcoholValidator);
+        beerResponseValidators = List.of(alcoholValidator, volumeAndContainerValidator, ibuValidator, nameValidator, beerTypeValidator);
 
         HikariConfig hikariConfig = new HikariConfig(dataBaseProperty);
         hikariConfig.setAutoCommit(false);
@@ -167,7 +234,14 @@ public class MainServlet extends HttpServlet {
                 dateTimeFormatter(dateTimeFormatter).
                 objectMapper(objectMapper).
                 build();
-        adminActionService = new AdminActionServiceImpl(adminRepository, beerRepository);
+        adminActionService = new AdminActionServiceImpl(adminRepository, beerRepository, dateTimeFormatter, transactionRepository);
+
+        BeerCountValidatorService<Beer> beerCountValidator = BeerCountValidatorService.
+                <Beer>builder().
+                getCount(Beer::getCount).
+                objectMapper(objectMapper).
+                parameter("count").
+                build();
 
         BeerDoGetServiceImpl beerUserDoGetService = BeerDoGetServiceImpl.
                 builder().
@@ -211,8 +285,24 @@ public class MainServlet extends HttpServlet {
                 validators(beerResponseValidators).
                 build();
 
-        doGetServices = List.of(beerUserDoGetService, authDoGetService, transactionUserDoGetService);
+        ChangeBeerPositionDoPutService changeBeerPositionDoPutService = ChangeBeerPositionDoPutService.
+                builder().
+                adminActionService(adminActionService).
+                nameHeaderToken(NAME_ACCESS_TOKEN).
+                objectMapper(objectMapper).
+                countValidator(beerCountValidator).
+                build();
+        GetAllUsersTransactionsDoGetService getAllUsersTransactionsDoGetService = GetAllUsersTransactionsDoGetService.
+                builder().
+                adminActionService(adminActionService).
+                nameHeaderToken(NAME_ACCESS_TOKEN).
+                objectMapper(objectMapper).
+                validator(transactionsValidators).
+                build();
+
+        doGetServices = List.of(beerUserDoGetService, authDoGetService, transactionUserDoGetService, getAllUsersTransactionsDoGetService);
         doPostServices = List.of(singUpUserDoPostService, buyBeerUserDoPostService, addNewBeerPositionDoPostService);
+        doPutServices = List.of(changeBeerPositionDoPutService);
     }
 
     @Override

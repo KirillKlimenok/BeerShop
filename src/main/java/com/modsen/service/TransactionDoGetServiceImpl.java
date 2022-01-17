@@ -3,7 +3,7 @@ package com.modsen.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.modsen.exception.TransactionNotFoundException;
 import com.modsen.exception.UserNotFoundException;
-import com.modsen.сontroller.model.UserTransactionRequest;
+import com.modsen.сontroller.model.TransactionRequest;
 import lombok.Builder;
 
 import javax.servlet.http.HttpServletRequest;
@@ -22,9 +22,9 @@ public class TransactionDoGetServiceImpl implements DoGetService {
     @Override
     public void apply(HttpServletRequest request, HttpServletResponse response, String bodyRequest) throws IOException, UserNotFoundException, SQLException, TransactionNotFoundException {
         String token = request.getHeader(nameHeaderToken);
-        UserTransactionRequest userTransactionRequest = objectMapper.readValue(bodyRequest, UserTransactionRequest.class);
-        userTransactionRequest.setUserToken(token);
-        String userTransactionsJson = objectMapper.writeValueAsString(userActionService.getTransactions(userTransactionRequest));
+        TransactionRequest transactionRequest = objectMapper.readValue(bodyRequest, TransactionRequest.class);
+        transactionRequest.setUserToken(token);
+        String userTransactionsJson = objectMapper.writeValueAsString(userActionService.getTransactions(transactionRequest));
 
         response.setStatus(200);
         response.setContentType("application/json;Windows-1251;charset=utf-8");

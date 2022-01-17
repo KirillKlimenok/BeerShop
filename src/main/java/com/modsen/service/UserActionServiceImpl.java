@@ -21,7 +21,7 @@ import com.modsen.сontroller.model.BeerRequest;
 import com.modsen.сontroller.model.BeerResponse;
 import com.modsen.сontroller.model.BeerTransactionRequest;
 import com.modsen.сontroller.model.Transaction;
-import com.modsen.сontroller.model.UserTransactionRequest;
+import com.modsen.сontroller.model.TransactionRequest;
 import com.modsen.сontroller.model.UserTransactionResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -140,7 +140,7 @@ public class UserActionServiceImpl implements UserActionService {
                 throw new TransactionException("You have entered a negative quantity of the desired product");
             }
             Beer beerInDb = beersInBd.stream().filter(x -> x.getId() == beerId).collect(Collectors.toList()).get(0);
-            double currentCountBeer = getValueCountFromJson(beerInDb.getCountBeerJson());
+            double currentCountBeer = getValueCountFromJson(beerInDb.getCount());
             if (countById >= currentCountBeer) {
                 throw new TransactionException("Do you want to buy beer id: " + beerId + " quantity " + countById + "?. Is there in stock: " + currentCountBeer + " such beer. Please correct the amount of beer you have selected or change the position");
             }
@@ -150,15 +150,15 @@ public class UserActionServiceImpl implements UserActionService {
     }
 
     @Override
-    public List<UserTransactionResponse> getTransactions(UserTransactionRequest userTransactionRequest) throws SQLException, TransactionNotFoundException, UserNotFoundException {
-        if (!userRepository.isUserExist(UUID.fromString(userTransactionRequest.getUserToken()))) {
-            throw new UserNotFoundException("User with this " + userTransactionRequest.getUserToken() + " token not found. please register before by purchase");
+    public List<UserTransactionResponse> getTransactions(TransactionRequest transactionRequest) throws SQLException, TransactionNotFoundException, UserNotFoundException {
+        if (!userRepository.isUserExist(UUID.fromString(transactionRequest.getUserToken()))) {
+            throw new UserNotFoundException("User with this " + transactionRequest.getUserToken() + " token not found. please register before by purchase");
         }
 
-        transactionsValidator.forEach(x -> x.check(userTransactionRequest));
+        transactionsValidator.forEach(x -> x.check(transactionRequest));
 
 
-        List<UserTransactions> userTransactions = transactionRepository.getTransaction(userTransactionRequest.getUserToken(), userTransactionRequest.getCountTransaction());
+        List<UserTransactions> userTransactions = transactionRepository.getTransaction(transactionRequest.getUserToken(), transactionRequest.getCountTransaction());
         if (userTransactions.isEmpty()) {
             throw new TransactionNotFoundException("Transactions not found, please try again");
         }
@@ -197,9 +197,10 @@ public class UserActionServiceImpl implements UserActionService {
         for (Beer beer : beerList) {
             BeerContainer beerContainer = beerContainerList.get(beer.getIdContainer());
             BeerType beerType = beerTypeList.get(beer.getIdTypeBeer());
-            String countBeer = objectMapper.readTree(beer.getCountBeerJson()).get("count").asText();
+            String countBeer = objectMapper.readTree(beer.getCount()).get("count").asText();
 
             BeerResponse beerResponse = BeerResponse.builder().
+                    id(beer.getId()).
                     name(beer.getName()).
                     container(beerContainer.getName()).
                     volume(beerContainer.getVolume()).

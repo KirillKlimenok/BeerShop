@@ -13,7 +13,7 @@ public class BeerDto {
     private Integer idBeerType;
     private Float alcoholContent;
     private Integer ibu;
-    private Integer countBeer;
+    private String countBeer;
 
     public BeerDto(String name, Integer idContainer, Integer idBeerType, Float alcoholContent, Integer ibu) {
         this.name = name;
@@ -21,6 +21,6 @@ public class BeerDto {
         this.idBeerType = idBeerType;
         this.alcoholContent = alcoholContent;
         this.ibu = ibu;
-        this.countBeer = 0;
+        this.countBeer = "{\"count\": 0}";
     }
 }

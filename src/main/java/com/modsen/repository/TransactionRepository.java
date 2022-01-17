@@ -1,5 +1,6 @@
 package com.modsen.repository;
 
+import com.modsen.repository.entytie.AdminTransaction;
 import com.modsen.repository.entytie.UserTransactions;
 import lombok.AllArgsConstructor;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class TransactionRepository {
     public static final String SQL_SCRIPT_FOR_GET_TRANSACTION_BY_USER_WITH_LIMIT = "select id_beer, count, date_time from users_transactions where id_user = ? limit ?;";
+    public static final String SQL_SCRIPT_FOR_GET_TRANSACTION_BY_ADMIN_WITH_LIMIT = "select id, id_beer, count, date_time from users_transactions limit ?;";
 
     private DataSource dataSource;
 
@@ -30,6 +32,27 @@ public class TransactionRepository {
                 userTransactions.add(new UserTransactions(resultSet.getInt("id_beer"), resultSet.getInt("count"), resultSet.getTimestamp("date_time").toLocalDateTime()));
             }
             return userTransactions;
+        }
+    }
+
+    public List<AdminTransaction> getTransaction(int countTransaction) throws SQLException {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(SQL_SCRIPT_FOR_GET_TRANSACTION_BY_ADMIN_WITH_LIMIT)) {
+            preparedStatement.setInt(1, countTransaction);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            List<AdminTransaction> adminTransactions = new ArrayList<>();
+            while (resultSet.next()) {
+                AdminTransaction adminTransaction = AdminTransaction.
+                        builder().
+                        userId(resultSet.getObject("id", UUID.class)).
+                        idBeer(resultSet.getInt("id_beer")).
+                        count(resultSet.getInt("count")).
+                        dateTime(resultSet.getTimestamp("date_time").toLocalDateTime()).
+                        build();
+
+                adminTransactions.add(adminTransaction);
+            }
+            return adminTransactions;
         }
     }
 }

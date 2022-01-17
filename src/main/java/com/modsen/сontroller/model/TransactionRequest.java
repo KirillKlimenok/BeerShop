@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 @NoArgsConstructor
 @RequiredArgsConstructor
 @AllArgsConstructor
-public class UserTransactionRequest implements Transaction {
+public class TransactionRequest implements Transaction {
     private String userToken;
     @NonNull
     private Integer countTransaction;

@@ -10,11 +10,22 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BeerResponse {
+    int id;
     String name;
     String container;
-    float volume;
+    Float volume;
     String beerType;
-    float alcoholContent;
-    int ibu;
+    Float alcoholContent;
+    Integer ibu;
     String count;
+
+    public BeerResponse(String name, String container, Float volume, String beerType, Float alcoholContent, Integer ibu, String count) {
+        this.name = name;
+        this.container = container;
+        this.volume = volume;
+        this.beerType = beerType;
+        this.alcoholContent = alcoholContent;
+        this.ibu = ibu;
+        this.count = count;
+    }
 }

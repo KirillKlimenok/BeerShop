@@ -12,9 +12,19 @@ import lombok.NoArgsConstructor;
 public class Beer {
     private int id;
     private String name;
-    private int idContainer;
+    private Integer idContainer;
     private int idTypeBeer;
     private float alcoholContent;
     private int ibu;
-    private String countBeerJson;
+    private String count;
+
+    public void setParam(Integer idContainer, String countBeerJson) {
+        if (idContainer != null) {
+            this.idContainer = idContainer;
+        }
+
+        if (countBeerJson != null) {
+            this.count = countBeerJson;
+        }
+    }
 }
