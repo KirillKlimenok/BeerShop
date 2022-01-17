@@ -12,12 +12,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-@Log4j
 @AllArgsConstructor
 public class UserRepository {
     private static final String SQL_SCRIPT_FOR_GET_USER_TOKEN = "select token from users_token where token = (select id from users_list where login = ? and password = ?);";
     private static final String SQL_SCRIPT_FOR_ADD_USER_IN_DB = "insert into users_list(id, login, email, password) VALUES (?,?,?,?); insert into users_token(token) VALUES (?)";
+    private static final String SQL_SCRIPT_FOR_FIND_USER_BY_ID = "select id from users_list where id = ?";
     private static final String SQL_SCRIPT_FOR_FIND_USER_IN_DB = "select * from users_list where login = ? or email = ?";
 
     private DataSource dataSource;
@@ -61,6 +62,15 @@ public class UserRepository {
                 list.add(resultSet.getString("email"));
             }
             return list;
+        }
+    }
+
+    public boolean isUserExist(UUID token) throws SQLException {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(SQL_SCRIPT_FOR_FIND_USER_BY_ID)) {
+            preparedStatement.setObject(1, token);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            return resultSet.next();
         }
     }
 }
